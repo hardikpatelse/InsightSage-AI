@@ -21,12 +21,7 @@ export class App {
     } else {
       console.warn('No active account found. User claims are unavailable.')
     }
-    const userInfo = {
-      name: claims?.name,
-      email: claims?.emails?.[0],  // Or claims?.email
-      tenantId: claims?.tid,
-      objectId: claims?.oid
-    }
+// Removed unused userInfo object
   }
 
 }
