@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "All APIs",
+    "Projects": [
+      {
+        "Path": "InsightSage.API.Auth\\InsightSage.API.Auth.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "InsightSage.API.Core\\InsightSage.API.Core.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

@@ -1,0 +1,9 @@
+<header class="flex items-center justify-between p-4 bg-gray-800 text-white shadow-md">
+    <div class="font-semibold text-xl">InsightSage-AI</div>
+    <div class="space-x-4">
+        <a routerLink="/chat" class="hover:underline">Chat</a>
+        <a routerLink="/dashboard" class="hover:underline">Dashboard</a>
+        <span class="text-sm text-gray-300">Tenant: {{ tenantName }}</span>
+        <button (click)="logout()" class="ml-4 bg-red-500 px-3 py-1 rounded hover:bg-red-600">Logout</button>
+    </div>
+</header>

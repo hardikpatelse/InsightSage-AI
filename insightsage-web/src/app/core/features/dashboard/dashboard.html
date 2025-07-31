@@ -1,0 +1,18 @@
+<div class="p-6 max-w-4xl mx-auto bg-white rounded shadow mt-8">
+    <div class="text-xl font-semibold mb-4">Admin Dashboard</div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 border rounded">
+            <div class="text-sm text-gray-500">Users</div>
+            <div class="text-2xl font-bold">{{ userCount }}</div>
+        </div>
+        <div class="p-4 border rounded">
+            <div class="text-sm text-gray-500">Total Chats</div>
+            <div class="text-2xl font-bold">{{ chatCount }}</div>
+        </div>
+        <div class="p-4 border rounded">
+            <div class="text-sm text-gray-500">Monthly Token Cost</div>
+            <div class="text-2xl font-bold">{{ tokenCost | currency:'USD' }}</div>
+        </div>
+    </div>
+</div>
