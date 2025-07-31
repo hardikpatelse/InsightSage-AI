@@ -13,12 +13,7 @@ export class DataProviderService {
       }
     )
   };
-  constructor(
-    private http: HttpClient
-  ) {
-
-  }
-
+  constructor(private http: HttpClient) {}
   getData<T>(baseUrl: string, apiEndPoint: string): Observable<T> {
     return this.http.get<T>(`${baseUrl}/${apiEndPoint}`, this.httpOptions)
   }
