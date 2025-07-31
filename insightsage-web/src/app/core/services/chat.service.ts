@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment'
 })
 export class ChatService {
   private messages: string[] = [];
-  private baseUrl: string = environment.apiBaseUrl;
+  private baseUrl: string = environment.chatApiBaseUrl;
 
   constructor(private dataProviderService: DataProviderService) { }
 
