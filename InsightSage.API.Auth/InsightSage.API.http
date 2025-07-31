@@ -1,0 +1,6 @@
+@InsightSage.API_HostAddress = http://localhost:5207
+
+GET {{InsightSage.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
