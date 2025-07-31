@@ -15,8 +15,12 @@ export class App {
   constructor(private msalService: MsalService) {
     // Initialize user information
     this.user = this.msalService.instance.getActiveAccount()
-    const claims = this.user.idTokenClaims
-    console.log('User claims:', claims)
+    const claims = this.user ? this.user.idTokenClaims : null
+    if (claims) {
+      console.log('User claims:', claims)
+    } else {
+      console.warn('No active account found. User claims are unavailable.')
+    }
     const userInfo = {
       name: claims?.name,
       email: claims?.emails?.[0],  // Or claims?.email
