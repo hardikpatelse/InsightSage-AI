@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using InsightSage.Shared.Interfaces.Others;
 
-namespace InsightSage.Application.Services
+namespace InsightSage.Infrastructure
 {
     public class UserContext : IUserContext
     {
