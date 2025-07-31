@@ -4,7 +4,7 @@ export const environment = {
     chatApiBaseUrl: 'https://chat-api.your-production-domain.com', // Chat API base URL for production
     msal: {
         clientId: 'YOUR_CLIENT_ID',  // From App registration
-        authority: 'https://entra.microsoft.com/<YOUR_TENANT_ID>/oauth2/v2.0/authorize?p=signup_signin',
+        authority: 'https://login.microsoftonline.com/<YOUR_TENANT_ID>/v2.0',
         redirectUri: 'https://your-production-domain.com',
         postLogoutRedirectUri: 'https://your-production-domain.com'
     }
