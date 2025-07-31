@@ -30,7 +30,6 @@ namespace InsightSage.API.Auth.Controllers
                 result.Status = HttpStatusCode.InternalServerError;
                 result.Errors.Add(ex.GetBaseException().Message);
                 result.ExceptionDetails = ex.ToString();
-                throw;
             }
             return result;
         }
