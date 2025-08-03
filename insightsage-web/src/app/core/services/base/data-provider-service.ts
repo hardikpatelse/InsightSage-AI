@@ -13,20 +13,30 @@ export class DataProviderService {
       }
     )
   };
-  constructor(private http: HttpClient) {}
-  getData<T>(baseUrl: string, apiEndPoint: string): Observable<T> {
-    return this.http.get<T>(`${baseUrl}/${apiEndPoint}`, this.httpOptions)
+
+  constructor(private http: HttpClient) { }
+
+  getData<T>(baseUrl: string, apiEndPoint: string, customHeaders?: any): Observable<T> {
+    const options = customHeaders ? { headers: new HttpHeaders(customHeaders) } : this.httpOptions
+    return this.http.get<T>(`${baseUrl}/${apiEndPoint}`, options)
   }
 
-  postData<T>(baseUrl: string, apiEndPoint: string, data: any): Observable<T> {
-    return this.http.post<T>(`${baseUrl}/${apiEndPoint}`, data, this.httpOptions)
+  postData<T>(baseUrl: string, apiEndPoint: string, data: any, customHeaders?: any): Observable<T> {
+    const options = customHeaders
+      ? { headers: new HttpHeaders({ ...this.httpOptions.headers, ...customHeaders }) }
+      : this.httpOptions
+    return this.http.post<T>(`${baseUrl}/${apiEndPoint}`, data, options)
   }
 
-  patchData<T>(baseUrl: string, apiEndPoint: string, data: any): Observable<T> {
-    return this.http.patch<T>(`${baseUrl}/${apiEndPoint}`, data, this.httpOptions)
+  patchData<T>(baseUrl: string, apiEndPoint: string, data: any, customHeaders?: any): Observable<T> {
+    const options = customHeaders
+      ? { headers: new HttpHeaders({ ...this.httpOptions.headers, ...customHeaders }) }
+      : this.httpOptions
+    return this.http.patch<T>(`${baseUrl}/${apiEndPoint}`, data, options)
   }
 
-  deleteData<T>(baseUrl: string, apiEndPoint: string): Observable<T> {
-    return this.http.delete<T>(`${baseUrl}/${apiEndPoint}`, this.httpOptions)
+  deleteData<T>(baseUrl: string, apiEndPoint: string, customHeaders?: any): Observable<T> {
+    const options = customHeaders ? { headers: new HttpHeaders(customHeaders) } : this.httpOptions
+    return this.http.delete<T>(`${baseUrl}/${apiEndPoint}`, options)
   }
 }

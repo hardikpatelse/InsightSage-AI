@@ -8,5 +8,6 @@ namespace InsightSage.Shared.Interfaces.Services
         Task<U> GetByEmailAsync(string email);
         Task<U> GetByUserIdAsync(string userId);
         Task<T> GetAllByTenantIdAsync(string tenantId);
+        Task<U> LoginAsync(V user);
     }
 }

@@ -1,49 +1,91 @@
-﻿using InsightSage.Shared.Interfaces.DataContexts;
+﻿using InsightSage.Data;
+using InsightSage.Shared.Interfaces.DataContexts;
 using InsightSage.Shared.Interfaces.DataContexts.Common;
 using InsightSage.Shared.Models.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace InsightSage.DataContext
 {
     public class UserDataContext : IUserDataContext
     {
-        Task<int> IEntityDataContext<User>.AddAsync(User data)
+        private readonly InsightSageDbContext _context;
+
+        public UserDataContext(InsightSageDbContext context)
         {
-            throw new NotImplementedException();
+            _context = context;
         }
 
-        Task<string> IEntityDataContext<User>.DeleteAsync(int id, int modifiedBy)
+        async Task<int> IEntityDataContext<User>.AddAsync(User data)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Reset Id to 0 to ensure it's treated as a new entity
+                data.Id = 0;
+                data.CreatedAt = DateTime.UtcNow;
+                data.UpdatedAt = DateTime.UtcNow;
+                
+                _context.Users.Add(data);
+                await _context.SaveChangesAsync();
+                
+                // Return the generated Id
+                return data.Id;
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) 
+                when (ex.InnerException?.Message?.Contains("IX_Users_Email_Unique") == true)
+            {
+                throw new InvalidOperationException($"A user with email '{data.Email}' already exists.", ex);
+            }
         }
 
-        Task<List<User>> IEntityDataContext<User>.GetAllAsync()
+        async Task<string> IEntityDataContext<User>.DeleteAsync(int id, int modifiedBy)
         {
-            throw new NotImplementedException();
+            var user = await _context.Users.FindAsync(id);
+            if (user != null)
+            {
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+                return "User deleted successfully";
+            }
+            return "User not found";
         }
 
-        Task<List<User>> IUserDataContext.GetAllByTenantIdAsync(string tenantId)
+        async Task<List<User>> IEntityDataContext<User>.GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Users.ToListAsync();
         }
 
-        Task<User?> IUserDataContext.GetByEmailAsync(string email)
+        async Task<List<User>> IUserDataContext.GetAllByTenantIdAsync(string tenantId)
         {
-            throw new NotImplementedException();
+            return await _context.Users
+                .Where(u => u.TenantId == tenantId)
+                .ToListAsync();
         }
 
-        Task<User> IEntityDataContext<User>.GetByIdAsync(int id)
+        async Task<User?> IUserDataContext.GetByEmailAsync(string email)
         {
-            throw new NotImplementedException();
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        Task<User?> IUserDataContext.GetByUserIdAsync(string userId)
+        async Task<User> IEntityDataContext<User>.GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var user = await _context.Users.FindAsync(id);
+            return user ?? throw new InvalidOperationException($"User with ID {id} not found");
         }
 
-        Task<int> IEntityDataContext<User>.UpdateAsync(User data)
+        async Task<User?> IUserDataContext.GetByUserIdAsync(string userId)
         {
-            throw new NotImplementedException();
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+        }
+
+        async Task<int> IEntityDataContext<User>.UpdateAsync(User data)
+        {
+            data.UpdatedAt = DateTime.UtcNow;
+            
+            _context.Users.Update(data);
+            await _context.SaveChangesAsync();
+            return data.Id;
         }
     }
 }

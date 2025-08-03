@@ -28,3 +28,9 @@
 /InsightSage.Infrastructure/bin/Debug/net9.0
 /InsightSage.Shared/bin/Debug/net9.0
 /InsightSage.Tests/bin/Debug/net9.0
+/InsightSage.API.Core.Test/bin/Debug/net9.0
+/InsightSage.API.Core.Test/obj
+/InsightSage.Application.Test/bin/Debug/net9.0
+/InsightSage.Application.Test/obj
+/InsightSage.API.Auth.Tests/bin/Debug/net9.0
+/InsightSage.API.Auth.Tests/obj

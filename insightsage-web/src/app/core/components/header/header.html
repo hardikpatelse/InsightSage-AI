@@ -1,9 +1,54 @@
-<header class="flex items-center justify-between p-4 bg-gray-800 text-white shadow-md">
-    <div class="font-semibold text-xl">InsightSage-AI</div>
-    <div class="space-x-4">
-        <a routerLink="/chat" class="hover:underline">Chat</a>
-        <a routerLink="/dashboard" class="hover:underline">Dashboard</a>
-        <span class="text-sm text-gray-300">Tenant: {{ tenantName }}</span>
-        <button (click)="logout()" class="ml-4 bg-red-500 px-3 py-1 rounded hover:bg-red-600">Logout</button>
+<!-- Header -->
+<header class="header">
+    <div class="header-left">
+        <button id="mobile-menu-btn" class="mobile-menu-btn">
+            <i class="fas fa-bars"></i>
+        </button>
+        <!-- <div class="header-logo">
+                        <i class="fas fa-brain"></i>
+                        <span>InsightSage-AI</span>
+                    </div> -->
+    </div>
+
+    <div class="header-right">
+        <div class="header-search">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search..." class="search-input">
+            </div>
+        </div>
+
+        <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+            <i class="fas fa-moon"></i>
+        </button>
+
+        <div class="user-dropdown">
+            <button class="user-button" (click)="toggleUserMenu()">
+                <img id="user-avatar"
+                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+                    alt="User Avatar" class="user-avatar">
+                <div class="user-info">
+                    <span class="user-name" id="user-name">{{ user?.name }}</span>
+                    <!-- <span class="user-role" id="user-role">{{ user?.role }}</span> -->
+                </div>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+
+            <div class="user-menu" *ngIf="showUserMenu">
+                <a href="#" class="menu-item" data-action="profile">
+                    <i class="fas fa-user"></i>
+                    Profile
+                </a>
+                <a href="#" class="menu-item" data-view="settings">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+                <div class="menu-divider"></div>
+                <a class="menu-item" data-action="logout" (click)="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
     </div>
 </header>

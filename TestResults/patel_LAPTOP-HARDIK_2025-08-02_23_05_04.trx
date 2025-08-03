@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="465528b3-1f05-4586-90af-a3eafd650619" name="patel@LAPTOP-HARDIK 2025-08-02 23:05:04" runUser="LAPTOP-HARDIK\patel" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-08-02T23:05:04.4353055+05:30" queuing="2025-08-02T23:05:04.4353061+05:30" start="2025-08-02T23:05:01.7200606+05:30" finish="2025-08-02T23:05:04.4641808+05:30" />
+  <TestSettings name="default" id="67718d0c-9ce2-4b8d-b8b2-696aaace0bba">
+    <Deployment runDeploymentRoot="patel_LAPTOP-HARDIK_2025-08-02_23_05_04" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="41722858-745d-46c4-bac3-dd784eaee4e1" testId="53cc5674-b417-31d8-e6a4-c25e33cba444" testName="InsightSage.Application.Test.Services.UserServiceTests.AddUpdateAsync_WhenExceptionOccurs_ShouldReturnErrorResponse" computerName="LAPTOP-HARDIK" duration="00:00:00.0067113" startTime="2025-08-02T23:05:04.0853484+05:30" endTime="2025-08-02T23:05:04.0853489+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="41722858-745d-46c4-bac3-dd784eaee4e1" />
+    <UnitTestResult executionId="ed16aa94-9913-4c5d-a243-f9a3edfd9b2f" testId="1283b448-c952-2f9e-a2a0-0e95df272571" testName="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenUserDoesNotExist_ShouldCreateNewUser" computerName="LAPTOP-HARDIK" duration="00:00:00.1309343" startTime="2025-08-02T23:05:04.0088568+05:30" endTime="2025-08-02T23:05:04.0088570+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ed16aa94-9913-4c5d-a243-f9a3edfd9b2f" />
+    <UnitTestResult executionId="9cead56b-16a8-4dd8-acfb-2f3fbef8b82a" testId="f6a94b4c-ec5e-ebbb-56dd-ae59dd241b38" testName="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenUniqueConstraintViolationOccurs_ShouldReturnGracefulError" computerName="LAPTOP-HARDIK" duration="00:00:00.0047019" startTime="2025-08-02T23:05:04.0902276+05:30" endTime="2025-08-02T23:05:04.0902279+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9cead56b-16a8-4dd8-acfb-2f3fbef8b82a" />
+    <UnitTestResult executionId="deb2556f-ac8b-429a-a22c-a44c6b91c2a1" testId="5ff5d11e-5b1b-800b-c883-1f090fc82c22" testName="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenEmailIsNull_ShouldReturnValidationError" computerName="LAPTOP-HARDIK" duration="00:00:00.0050686" startTime="2025-08-02T23:05:04.0783643+05:30" endTime="2025-08-02T23:05:04.0783647+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="deb2556f-ac8b-429a-a22c-a44c6b91c2a1" />
+    <UnitTestResult executionId="b7cd7b81-b442-4dfb-b0e1-f4f53b5cdfb0" testId="fb959341-7d73-170c-fe41-462ef532e0a2" testName="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenUserExists_ShouldUpdateAndReturnExistingUser" computerName="LAPTOP-HARDIK" duration="00:00:00.0433658" startTime="2025-08-02T23:05:04.0647661+05:30" endTime="2025-08-02T23:05:04.0647665+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b7cd7b81-b442-4dfb-b0e1-f4f53b5cdfb0" />
+    <UnitTestResult executionId="42eef933-2f3f-4c3d-a69d-1e40b50caba1" testId="1abd21f1-e28f-e0b2-93ad-3709803862ca" testName="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenGeneralExceptionOccurs_ShouldReturnErrorResponse" computerName="LAPTOP-HARDIK" duration="00:00:00.0081834" startTime="2025-08-02T23:05:04.0731152+05:30" endTime="2025-08-02T23:05:04.0731156+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="42eef933-2f3f-4c3d-a69d-1e40b50caba1" />
+    <UnitTestResult executionId="b7245da6-85cd-4cfc-9cfc-10de25b9ccea" testId="5bfc9914-1082-9e09-ad53-4b6385b4d763" testName="InsightSage.Application.Test.Services.UserServiceTests.AddUpdateAsync_WhenAddingNewUser_ShouldReturnSuccessResponse" computerName="LAPTOP-HARDIK" duration="00:00:00.0123464" startTime="2025-08-02T23:05:04.0212142+05:30" endTime="2025-08-02T23:05:04.0212147+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b7245da6-85cd-4cfc-9cfc-10de25b9ccea" />
+    <UnitTestResult executionId="2eea9094-ac6c-4cb5-b82c-4fa7fd1ab975" testId="898d620d-3554-0c7d-edbc-16f7090ef981" testName="InsightSage.Application.Test.Services.UserServiceTests.GetCurrentUser_WhenUserContextHasData_ShouldReturnCurrentUser" computerName="LAPTOP-HARDIK" duration="00:00:00.2194579" startTime="2025-08-02T23:05:03.8793075+05:30" endTime="2025-08-02T23:05:03.8793785+05:30" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2eea9094-ac6c-4cb5-b82c-4fa7fd1ab975" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="InsightSage.Application.Test.Services.UserServiceTests.AddUpdateAsync_WhenAddingNewUser_ShouldReturnSuccessResponse" storage="g:\repositories\insightsage\insightsage-ai\insightsage.application.test\bin\debug\net9.0\insightsage.application.test.dll" id="5bfc9914-1082-9e09-ad53-4b6385b4d763">
+      <Execution id="b7245da6-85cd-4cfc-9cfc-10de25b9ccea" />
+      <TestMethod codeBase="G:\Repositories\InsightSage\InsightSage-AI\InsightSage.Application.Test\bin\Debug\net9.0\InsightSage.Application.Test.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InsightSage.Application.Test.Services.UserServiceTests" name="AddUpdateAsync_WhenAddingNewUser_ShouldReturnSuccessResponse" />
+    </UnitTest>
+    <UnitTest name="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenUserExists_ShouldUpdateAndReturnExistingUser" storage="g:\repositories\insightsage\insightsage-ai\insightsage.application.test\bin\debug\net9.0\insightsage.application.test.dll" id="fb959341-7d73-170c-fe41-462ef532e0a2">
+      <Execution id="b7cd7b81-b442-4dfb-b0e1-f4f53b5cdfb0" />
+      <TestMethod codeBase="G:\Repositories\InsightSage\InsightSage-AI\InsightSage.Application.Test\bin\Debug\net9.0\InsightSage.Application.Test.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InsightSage.Application.Test.Services.UserServiceTests" name="LoginAsync_WhenUserExists_ShouldUpdateAndReturnExistingUser" />
+    </UnitTest>
+    <UnitTest name="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenGeneralExceptionOccurs_ShouldReturnErrorResponse" storage="g:\repositories\insightsage\insightsage-ai\insightsage.application.test\bin\debug\net9.0\insightsage.application.test.dll" id="1abd21f1-e28f-e0b2-93ad-3709803862ca">
+      <Execution id="42eef933-2f3f-4c3d-a69d-1e40b50caba1" />
+      <TestMethod codeBase="G:\Repositories\InsightSage\InsightSage-AI\InsightSage.Application.Test\bin\Debug\net9.0\InsightSage.Application.Test.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InsightSage.Application.Test.Services.UserServiceTests" name="LoginAsync_WhenGeneralExceptionOccurs_ShouldReturnErrorResponse" />
+    </UnitTest>
+    <UnitTest name="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenUserDoesNotExist_ShouldCreateNewUser" storage="g:\repositories\insightsage\insightsage-ai\insightsage.application.test\bin\debug\net9.0\insightsage.application.test.dll" id="1283b448-c952-2f9e-a2a0-0e95df272571">
+      <Execution id="ed16aa94-9913-4c5d-a243-f9a3edfd9b2f" />
+      <TestMethod codeBase="G:\Repositories\InsightSage\InsightSage-AI\InsightSage.Application.Test\bin\Debug\net9.0\InsightSage.Application.Test.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InsightSage.Application.Test.Services.UserServiceTests" name="LoginAsync_WhenUserDoesNotExist_ShouldCreateNewUser" />
+    </UnitTest>
+    <UnitTest name="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenEmailIsNull_ShouldReturnValidationError" storage="g:\repositories\insightsage\insightsage-ai\insightsage.application.test\bin\debug\net9.0\insightsage.application.test.dll" id="5ff5d11e-5b1b-800b-c883-1f090fc82c22">
+      <Execution id="deb2556f-ac8b-429a-a22c-a44c6b91c2a1" />
+      <TestMethod codeBase="G:\Repositories\InsightSage\InsightSage-AI\InsightSage.Application.Test\bin\Debug\net9.0\InsightSage.Application.Test.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InsightSage.Application.Test.Services.UserServiceTests" name="LoginAsync_WhenEmailIsNull_ShouldReturnValidationError" />
+    </UnitTest>
+    <UnitTest name="InsightSage.Application.Test.Services.UserServiceTests.LoginAsync_WhenUniqueConstraintViolationOccurs_ShouldReturnGracefulError" storage="g:\repositories\insightsage\insightsage-ai\insightsage.application.test\bin\debug\net9.0\insightsage.application.test.dll" id="f6a94b4c-ec5e-ebbb-56dd-ae59dd241b38">
+      <Execution id="9cead56b-16a8-4dd8-acfb-2f3fbef8b82a" />
+      <TestMethod codeBase="G:\Repositories\InsightSage\InsightSage-AI\InsightSage.Application.Test\bin\Debug\net9.0\InsightSage.Application.Test.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InsightSage.Application.Test.Services.UserServiceTests" name="LoginAsync_WhenUniqueConstraintViolationOccurs_ShouldReturnGracefulError" />
+    </UnitTest>
+    <UnitTest name="InsightSage.Application.Test.Services.UserServiceTests.AddUpdateAsync_WhenExceptionOccurs_ShouldReturnErrorResponse" storage="g:\repositories\insightsage\insightsage-ai\insightsage.application.test\bin\debug\net9.0\insightsage.application.test.dll" id="53cc5674-b417-31d8-e6a4-c25e33cba444">
+      <Execution id="41722858-745d-46c4-bac3-dd784eaee4e1" />
+      <TestMethod codeBase="G:\Repositories\InsightSage\InsightSage-AI\InsightSage.Application.Test\bin\Debug\net9.0\InsightSage.Application.Test.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InsightSage.Application.Test.Services.UserServiceTests" name="AddUpdateAsync_WhenExceptionOccurs_ShouldReturnErrorResponse" />
+    </UnitTest>
+    <UnitTest name="InsightSage.Application.Test.Services.UserServiceTests.GetCurrentUser_WhenUserContextHasData_ShouldReturnCurrentUser" storage="g:\repositories\insightsage\insightsage-ai\insightsage.application.test\bin\debug\net9.0\insightsage.application.test.dll" id="898d620d-3554-0c7d-edbc-16f7090ef981">
+      <Execution id="2eea9094-ac6c-4cb5-b82c-4fa7fd1ab975" />
+      <TestMethod codeBase="G:\Repositories\InsightSage\InsightSage-AI\InsightSage.Application.Test\bin\Debug\net9.0\InsightSage.Application.Test.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="InsightSage.Application.Test.Services.UserServiceTests" name="GetCurrentUser_WhenUserContextHasData_ShouldReturnCurrentUser" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="53cc5674-b417-31d8-e6a4-c25e33cba444" executionId="41722858-745d-46c4-bac3-dd784eaee4e1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1283b448-c952-2f9e-a2a0-0e95df272571" executionId="ed16aa94-9913-4c5d-a243-f9a3edfd9b2f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f6a94b4c-ec5e-ebbb-56dd-ae59dd241b38" executionId="9cead56b-16a8-4dd8-acfb-2f3fbef8b82a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5ff5d11e-5b1b-800b-c883-1f090fc82c22" executionId="deb2556f-ac8b-429a-a22c-a44c6b91c2a1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fb959341-7d73-170c-fe41-462ef532e0a2" executionId="b7cd7b81-b442-4dfb-b0e1-f4f53b5cdfb0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1abd21f1-e28f-e0b2-93ad-3709803862ca" executionId="42eef933-2f3f-4c3d-a69d-1e40b50caba1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5bfc9914-1082-9e09-ad53-4b6385b4d763" executionId="b7245da6-85cd-4cfc-9cfc-10de25b9ccea" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="898d620d-3554-0c7d-edbc-16f7090ef981" executionId="2eea9094-ac6c-4cb5-b82c-4fa7fd1ab975" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="8" executed="8" passed="8" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)&#xD;
+[xUnit.net 00:00:00.35]   Discovering: InsightSage.Application.Test&#xD;
+[xUnit.net 00:00:00.45]   Discovered:  InsightSage.Application.Test&#xD;
+[xUnit.net 00:00:00.46]   Starting:    InsightSage.Application.Test&#xD;
+[xUnit.net 00:00:01.11]   Finished:    InsightSage.Application.Test&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

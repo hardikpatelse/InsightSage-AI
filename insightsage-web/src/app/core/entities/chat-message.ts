@@ -1,4 +1,7 @@
 export interface ChatMessage {
-    text: string
+    message: string
     isUser: boolean
+    timestamp?: string
+    id?: number
+    role?: 'user' | 'assistant' | 'system'
 }
