@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core'
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http'
-import { Observable, from, switchMap, catchError, of, throwError } from 'rxjs'
+import { Observable, from, switchMap, catchError, firstValueFrom } from 'rxjs'
 import { MsalService } from '@azure/msal-angular'
+import { environment } from '../../../environments/environment'
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -29,10 +30,10 @@ export class AuthInterceptor implements HttpInterceptor {
 
         // Acquire token silently and add to request
         return from(
-            this.msalService.acquireTokenSilent({
+            firstValueFrom(this.msalService.acquireTokenSilent({
                 scopes: scopes,
                 account: account
-            }).toPromise()
+            }))
         ).pipe(
             switchMap(result => {
                 if (!result || !result.accessToken) {
@@ -99,8 +100,6 @@ export class AuthInterceptor implements HttpInterceptor {
      * Get the backend domain from environment or configuration
      */
     private getBackendDomain(): string {
-        // You can get this from environment configuration
-        // For now, return a generic pattern
-        return 'localhost' // Update this to match your backend API domain
+        return environment.backendDomain // Update this to match your backend API domain
     }
 }

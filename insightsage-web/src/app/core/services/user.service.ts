@@ -41,15 +41,7 @@ export class UserService {
       await this.msalService.instance.initialize()
       console.log('MSAL initialized successfully')
 
-      // Handle redirect promise if coming back from a redirect
-      try {
-        const response = await this.msalService.instance.handleRedirectPromise()
-        if (response && response.account) {
-          this.msalService.instance.setActiveAccount(response.account)
-        }
-      } catch (error) {
-        console.warn('No redirect response to handle:', error)
-      }
+      await this.handleRedirectPromise()
 
       // Initialize user after MSAL is ready
       this.initializeUser()
@@ -57,6 +49,18 @@ export class UserService {
       console.error('Failed to initialize MSAL:', error)
       throw error
     }
+  }
+  async handleRedirectPromise() {
+    // Handle redirect promise if coming back from a redirect
+    try {
+      const response = await this.msalService.instance.handleRedirectPromise()
+      if (response && response.account) {
+        this.msalService.instance.setActiveAccount(response.account)
+      }
+    } catch (error) {
+      console.warn('No redirect response to handle:', error)
+    }
+
   }
 
   /**
@@ -169,7 +173,9 @@ export class UserService {
     }
 
     this.msalService.loginRedirect(loginRequest)
-  }  /**
+  }
+
+  /**
    * Login with popup and get user info
    */
   loginPopup(): Observable<User | null> {
