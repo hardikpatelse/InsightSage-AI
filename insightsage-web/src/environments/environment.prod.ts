@@ -1,5 +1,6 @@
 export const environment = {
     production: true,
+    backendDomain: 'localhost', // Update this to match your backend API domain
     authApiBaseUrl: 'https://api.your-production-domain.com', // Example API base URL, adjust as needed
     chatApiBaseUrl: 'https://chat-api.your-production-domain.com', // Chat API base URL for production
     msal: {

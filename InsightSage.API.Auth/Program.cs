@@ -1,6 +1,7 @@
 using InsightSage.Application.Services;
 using InsightSage.Data;
 using InsightSage.DataContext;
+using InsightSage.Infrastructure;
 using InsightSage.Shared.Interfaces.DataContexts;
 using InsightSage.Shared.Interfaces.Others;
 using InsightSage.Shared.Interfaces.Services;
@@ -16,6 +17,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "InsightSage Auth API", Version = "v1" });
+    
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -28,7 +54,34 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.Audience = clientId;  // Your SPA App Registration ID
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ClockSkew = TimeSpan.FromMinutes(5)
+        };
+
+        // Add event handlers for debugging
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError("Authentication failed: {Error}", context.Exception.Message);
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning("Authentication challenge: {Error}", context.ErrorDescription);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Token validated successfully for user: {User}", context.Principal?.Identity?.Name ?? "Unknown");
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -53,7 +106,7 @@ builder.Services.AddScoped<IUserService<UserResponse<List<User>>, UserResponse<U
 
 #region Connection Strings
 builder.Services.AddDbContext<InsightSageDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ChatBotDb")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("InsightSageDb")));
 #endregion
 
 #region Data Contexts
@@ -80,9 +133,12 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowLocalAngular");
 
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
     app.UseSwagger();
@@ -91,4 +147,5 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "InsightSage Auth API v1");
     });
 }
+
 app.Run();

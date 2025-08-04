@@ -1,23 +1,66 @@
-<div class="max-w-3xl mx-auto mt-8 p-6 bg-white rounded shadow">
-    <div class="text-lg font-semibold mb-4">Chat with InsightSage</div>
-    <div class="space-y-3 max-h-[400px] overflow-y-auto">
-        <ng-container *ngIf="messages.length > 0">
-            <div *ngFor="let msg of messages">
-                <div [ngClass]="{'text-right': msg.isUser}">
-                    <div class="inline-block px-4 py-2 rounded-lg"
-                        [ngClass]="msg.isUser ? 'bg-blue-100' : 'bg-gray-100'">
-                        {{ msg.text }}
-                    </div>
+<!-- Chat View -->
+<div id="chat-view" *ngIf="user">
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-title">
+                <h2>AI Chat Assistant</h2>
+                <div class="chat-status">
+                    <span class="status status--success">Online</span>
                 </div>
             </div>
-        </ng-container>
-    </div>
+            <div class="chat-actions">
+                <div class="token-usage">
+                    <i class="fas fa-coins"></i>
+                    <span id="remaining-tokens">15,420</span> tokens remaining
+                </div>
+                <button class="btn btn--outline btn--sm" id="clear-chat">
+                    <i class="fas fa-trash"></i>
+                    <span class="px-8">Clear Chat</span>
+                </button>
+                <button class="btn btn--outline btn--sm" id="export-chat">
+                    <i class="fas fa-download"></i>
+                    <span class="px-8">Export</span>
+                </button>
+            </div>
+        </div>
 
-    <div class="mt-4 flex gap-2">
-        <input [(ngModel)]="prompt" (keyup.enter)="sendPrompt()" class="flex-1 border px-3 py-2 rounded"
-            placeholder="Ask a question...">
-        <button (click)="sendPrompt()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Send
-        </button>
+        <div class="chat-messages" id="chat-messages">
+            <ng-container *ngIf="messages.length > 0">
+                <div *ngFor="let msg of messages" class="message" [class]="msg.role">
+                    <div class="message-avatar">
+                        <i class="fas fa-user" *ngIf="msg.isUser"></i>
+                        <i class="fas fa-robot" *ngIf="!msg.isUser"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">{{ msg.message }}</div>
+                        <div class="message-time">{{ msg.timestamp }}</div>
+                    </div>
+                    <!-- <div class="inline-block px-4 py-2 rounded-lg"
+                        [ngClass]="msg.isUser ? 'bg-blue-100' : 'bg-gray-100'">
+                        {{ msg.message }}
+                    </div> -->
+                </div>
+            </ng-container>
+        </div>
+
+        <div id="typing-indicator" class="typing-indicator hidden">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span>AI is typing...</span>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper">
+                <textarea id="chat-input"
+                    placeholder="Ask me anything about your business, data analysis, or any other topic..."
+                    rows="1"></textarea>
+                <button id="send-button" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
     </div>
 </div>

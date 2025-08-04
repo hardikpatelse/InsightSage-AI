@@ -1,5 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core'
 import { provideRouter } from '@angular/router'
+import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http'
 import { importProvidersFrom } from '@angular/core'
 import {
   MsalModule,
@@ -18,6 +19,9 @@ import {
   BrowserCacheLocation
 } from '@azure/msal-browser'
 import { msalConfig } from './core/auth/msal-config'
+import { ErrorInterceptor } from './core/interceptors/error.interceptor'
+import { ApiResponseInterceptor } from './core/interceptors/api-response.interceptor'
+import { AuthInterceptor } from './core/interceptors/auth.interceptor'
 
 import { routes } from './app.routes'
 
@@ -49,6 +53,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
+    provideHttpClient(withInterceptorsFromDi()),
     importProvidersFrom(MsalModule),
     {
       provide: MSAL_INSTANCE,
@@ -61,6 +66,21 @@ export const appConfig: ApplicationConfig = {
     {
       provide: MSAL_INTERCEPTOR_CONFIG,
       useFactory: MSALInterceptorConfigFactory
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ApiResponseInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
+      multi: true
     },
     MsalService,
     MsalGuard

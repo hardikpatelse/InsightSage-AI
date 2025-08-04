@@ -1,18 +1,28 @@
 import { Routes } from '@angular/router'
 import { MsalGuard } from '@azure/msal-angular'
-import { Chat } from './core/features/chat/chat'
-import { Dashboard } from './core/features/dashboard/dashboard'
 
 export const routes: Routes = [
     {
+        path: 'login',
+        loadChildren: () => import('./core/features/login/login.module').then(m => m.LoginModule)
+    },
+    {
         path: 'chat',
-        component: Chat,
+        loadChildren: () => import('./core/features/chat/chat.module').then(m => m.ChatModule),
         canActivate: [MsalGuard]
     },
     {
         path: 'dashboard',
-        component: Dashboard,
+        loadChildren: () => import('./core/features/dashboard/dashboard.module').then(m => m.DashboardModule),
         canActivate: [MsalGuard]
     },
-    { path: '', redirectTo: 'chat', pathMatch: 'full' }
+    {
+        path: '',
+        redirectTo: '/login',
+        pathMatch: 'full'
+    },
+    {
+        path: '**',
+        redirectTo: '/login'
+    }
 ]

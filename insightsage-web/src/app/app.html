@@ -1,3 +1,15 @@
-<app-header></app-header>
+<app-header *ngIf="user && !isLoginPage" [user]="user"></app-header>
+<!-- Main Application -->
+<div id="main-app" class="main-app" *ngIf="user && !isLoginPage">
 
-<router-outlet />
+    <app-sidebar></app-sidebar>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <router-outlet *ngIf="!isLoginPage" />
+    </div>
+</div>
+<router-outlet *ngIf="isLoginPage" />
+
+<!-- Global notification component -->
+<app-notification></app-notification>
