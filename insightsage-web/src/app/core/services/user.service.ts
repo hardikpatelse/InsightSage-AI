@@ -16,10 +16,16 @@ export class UserService {
   private baseUrl: string = environment.authApiBaseUrl;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private initializationPromise: Promise<void>
-  private syncInProgress = false;
+  // private syncInProgress = false; // Removed, replaced by RxJS-based sync logic
   private lastSyncTime: number = 0;
   private syncCooldownMs = 5000; // 5 seconds cooldown between syncs
 
+  private syncUserSubject = new Subject<void>();
+  public syncUser$ = this.syncUserSubject.pipe(
+    // Only allow one sync at a time, cancel previous if new request comes in
+    switchMap(() => this.performUserSync()),
+    shareReplay(1)
+  );
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(
