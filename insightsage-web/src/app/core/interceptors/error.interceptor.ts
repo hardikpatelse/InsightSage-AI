@@ -4,14 +4,14 @@ import { Observable, throwError } from 'rxjs'
 import { catchError, retry } from 'rxjs/operators'
 import { Router } from '@angular/router'
 import { environment } from '../../../environments/environment'
-import { NotificationService } from '../services/notification.service'
+// import { NotificationService } from '../services/notification.service'
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
 
     constructor(
         private router: Router,
-        private notificationService: NotificationService
+        // private notificationService: NotificationService
     ) { }
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -137,16 +137,16 @@ export class ErrorInterceptor implements HttpInterceptor {
     }
 
     private showErrorNotification(message: string, status: number): void {
-        // Show user-friendly notification using the notification service
-        if (status === 401) {
-            this.notificationService.showError(message, 'Authentication Required')
-        } else if (status >= 500) {
-            this.notificationService.showError(message, 'Server Error')
-        } else if (status >= 400) {
-            this.notificationService.showError(message, 'Request Error')
-        } else {
-            this.notificationService.showError(message, 'Network Error')
-        }
+        // // Show user-friendly notification using the notification service
+        // if (status === 401) {
+        //     this.notificationService.showError(message, 'Authentication Required')
+        // } else if (status >= 500) {
+        //     this.notificationService.showError(message, 'Server Error')
+        // } else if (status >= 400) {
+        //     this.notificationService.showError(message, 'Request Error')
+        // } else {
+        //     this.notificationService.showError(message, 'Network Error')
+        // }
 
         // Log detailed error for debugging
         console.warn(`API Error (${status}): ${message}`)

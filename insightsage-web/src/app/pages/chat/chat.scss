@@ -1,0 +1,296 @@
+// Chat Container Styles
+.chat-container {
+    height: calc(100vh - 158px);
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: visible; // Changed from hidden to visible to allow dropdowns
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    position: relative; // Added for z-index context
+}
+
+// Chat Header Styles
+.chat-header {
+    padding: 1.5rem;
+    background: var(--surface-ground);
+    border-bottom: 1px solid var(--surface-border);
+
+    h5 {
+        color: var(--text-color);
+        font-weight: 600;
+    }
+}
+
+
+
+// Typing Indicator Styles
+.typing-indicator {
+    padding: 1rem 1.25rem;
+
+    .typing-dots {
+        display: flex;
+        gap: 4px;
+
+        span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-color-secondary);
+            animation: typing 1.4s infinite ease-in-out;
+
+            &:nth-child(1) {
+                animation-delay: -0.32s;
+            }
+
+            &:nth-child(2) {
+                animation-delay: -0.16s;
+            }
+        }
+    }
+}
+
+@keyframes typing {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+// Chat Input Area Styles
+.chat-input-area {
+    // padding: 1.5rem;
+    background: var(--surface-card);
+    // border-top: 1px solid var(--surface-border);
+    position: relative;
+    z-index: 10;
+    overflow: visible; // Allow dropdowns to extend beyond
+}
+
+.message-input-container {
+    .p-inputgroup {
+        display: flex;
+        align-items: stretch;
+
+        .message-textarea {
+            flex: 1;
+            resize: none;
+            border-right: none;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            min-height: 3rem;
+            max-height: 8rem;
+
+            &:focus {
+                box-shadow: none;
+                border-color: var(--primary-color);
+            }
+        }
+
+        .send-button {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            padding: 0 1.25rem;
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.2s ease;
+
+            &:not(:disabled):hover {
+                // background: var(--primary-600);
+                // border-color: var(--primary-600);
+                transform: translateY(-1px);
+            }
+
+            &:disabled {
+                // background: var(--primary-600);
+                // border-color: var(--primary-600);
+                cursor: not-allowed;
+            }
+
+            .pi-send {
+                font-size: 1rem;
+            }
+        }
+    }
+}
+
+// Select Dropdown Styles
+.mode-select,
+.model-select {
+    min-width: 150px;
+    position: relative;
+    z-index: 1000;
+
+    .p-select-label {
+        font-size: 0.9rem;
+    }
+
+    // Fix dropdown panel positioning
+    ::ng-deep .p-select-overlay {
+        z-index: 1100 !important;
+        // max-height: 200px;
+        overflow-y: auto;
+    }
+
+    // Ensure dropdown appears above other elements
+    ::ng-deep .p-select-panel {
+        z-index: 1100 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        border: 1px solid var(--surface-border) !important;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    // Fix for items container
+    ::ng-deep .p-select-list-container {
+        // max-height: 200px;
+        overflow-y: auto;
+    }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+    .chat-container {
+        height: calc(100vh - 120px);
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .chat-header {
+        padding: 1rem;
+
+        .flex {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start !important;
+        }
+    }
+
+    .messages-container {
+        padding: 1rem;
+    }
+
+    .message-content {
+        max-width: 85%;
+    }
+
+    .chat-input-area {
+        padding: 1rem;
+
+        .flex {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start !important;
+        }
+
+        .mode-select,
+        .model-select {
+            min-width: 100%;
+        }
+    }
+
+    .message-bubble {
+        font-size: 0.9rem;
+        padding: 0.875rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .message-content {
+        max-width: 95%;
+    }
+
+    .chat-header h5 {
+        font-size: 1.1rem;
+    }
+
+    .message-bubble {
+        padding: 0.75rem 0.875rem;
+    }
+}
+
+// Dark Mode Adjustments
+@media (prefers-color-scheme: dark) {
+    .ai-bubble {
+        background: var(--surface-200);
+        border-color: var(--surface-300);
+
+        &::after {
+            border-top-color: var(--surface-200);
+            border-right-color: var(--surface-200);
+        }
+    }
+}
+
+// Smooth Animations
+.message-wrapper {
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Focus States
+.message-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.2);
+}
+
+// Chip Customization
+.p-chip-outlined {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+
+    .p-chip-icon {
+        color: var(--primary-color);
+    }
+}
+
+// Scrollbar Customization
+.chat-scroll .p-scrollpanel-bar-y {
+    background: var(--surface-300);
+    width: 6px;
+    border-radius: 3px;
+
+    &:hover {
+        background: var(--surface-400);
+    }
+}
+
+// Global PrimeNG dropdown fixes for this component
+:host ::ng-deep {
+    .p-select-overlay {
+        z-index: 1200 !important;
+    }
+
+    .p-select-panel {
+        z-index: 1200 !important;
+        max-height: 250px !important;
+        overflow-y: auto !important;
+    }
+
+    .p-overlay {
+        z-index: 1200 !important;
+    }
+}

@@ -1,7 +1,6 @@
 ﻿namespace InsightSage.Shared.Models.Responses.Common
 {
-    public class AddUpdateEntityResponse : BaseResponse
+    public class AddUpdateEntityResponse : EntitiesResponse<int>
     {
-        public int Id { get; set; }
     }
 }

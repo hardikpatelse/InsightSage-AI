@@ -5,6 +5,7 @@ using InsightSage.Shared.Interfaces.Services.Common;
 using InsightSage.Shared.Models.Entities;
 using InsightSage.Shared.Models.Responses;
 using InsightSage.Shared.Models.Responses.Common;
+using InsightSage.Shared.Exceptions;
 using System.Net;
 
 namespace InsightSage.Application.Services
@@ -38,30 +39,30 @@ namespace InsightSage.Application.Services
 
                 return new AddUpdateEntityResponse
                 {
-                    Id = id,
-                    Status = HttpStatusCode.OK
+                    Result = id,
                 };
             }
             catch (Exception ex)
             {
                 return new AddUpdateEntityResponse
                 {
-                    Id = 0,
                     Status = HttpStatusCode.InternalServerError,
                     Errors = new List<string> { ex.Message }
                 };
             }
         }
 
-        async Task<DeleteEntityResponse> IEntityService<UserResponse<List<User>>, UserResponse<User>, User>.DeleteAsync(int id, int modifiedBy)
+        async Task<DeleteEntityResponse> IEntityService<UserResponse<List<User>>, UserResponse<User>, User>.DeleteAsync(int id, Guid userId)
         {
+
             try
             {
-                var message = await _userDataContext.DeleteAsync(id, modifiedBy);
+                var user = await ((IUserService<UserResponse<List<User>>, UserResponse<User>, User>)this).GetByUserIdAsync(userId.ToString());
+
+                var message = await _userDataContext.DeleteAsync(id, user.Result.Id);
                 return new DeleteEntityResponse
                 {
                     Result = message,
-                    Status = HttpStatusCode.OK
                 };
             }
             catch (Exception ex)
@@ -172,18 +173,37 @@ namespace InsightSage.Application.Services
 
         async Task<UserResponse<User>> IUserService<UserResponse<List<User>>, UserResponse<User>, User>.GetCurrentUser()
         {
-            var user = new User()
+            try
             {
-                UserId = _userContext.UserId,
-                Email = _userContext.Email,
-                Name = _userContext.Name,
-                TenantId = _userContext.TenantId
-            };
+                var user = new User()
+                {
+                    UserId = Convert.ToString(_userContext.UserId), // UserId will throw exception if not authenticated
+                    Email = _userContext.Email,
+                    Name = _userContext.Name,
+                    TenantId = _userContext.TenantId
+                };
 
-            return await Task.FromResult(new UserResponse<User>
+                return await Task.FromResult(new UserResponse<User>
+                {
+                    Result = user
+                });
+            }
+            catch (UnauthorizedException)
             {
-                Result = user
-            });
+                return new UserResponse<User>
+                {
+                    Status = HttpStatusCode.Unauthorized,
+                    Errors = new List<string> { "User is not authenticated or user ID is invalid. Please log in again to continue." }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new UserResponse<User>
+                {
+                    Status = HttpStatusCode.InternalServerError,
+                    Errors = new List<string> { ex.Message }
+                };
+            }
         }
 
         async Task<UserResponse<User>> IUserService<UserResponse<List<User>>, UserResponse<User>, User>.LoginAsync(User user)

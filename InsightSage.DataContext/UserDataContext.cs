@@ -30,7 +30,7 @@ namespace InsightSage.DataContext
                 // Return the generated Id
                 return data.Id;
             }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) 
+            catch (DbUpdateException ex) 
                 when (ex.InnerException?.Message?.Contains("IX_Users_Email_Unique") == true)
             {
                 throw new InvalidOperationException($"A user with email '{data.Email}' already exists.", ex);

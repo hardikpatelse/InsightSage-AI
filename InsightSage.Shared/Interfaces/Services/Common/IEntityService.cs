@@ -10,6 +10,6 @@ namespace InsightSage.Shared.Interfaces.Services.Common
 
         Task<AddUpdateEntityResponse> AddUpdateAsync(V data);
 
-        Task<DeleteEntityResponse> DeleteAsync(int id, int modifiedBy);
+        Task<DeleteEntityResponse> DeleteAsync(int id, Guid userId);
     }
 }

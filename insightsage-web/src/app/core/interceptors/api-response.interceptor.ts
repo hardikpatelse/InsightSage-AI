@@ -2,14 +2,17 @@ import { Injectable } from '@angular/core'
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpResponse, HttpErrorResponse } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs'
 import { map, catchError } from 'rxjs/operators'
-import { ApiResponse, isApiSuccess, isApiError } from '../entities/api-response'
-import { NotificationService } from '../services/notification.service'
+import { ApiResponse, isApiSuccess, isApiError } from '../entities/responses/api-response'
+// import { NotificationService } from '../services/notification.service'
 import { environment } from '../../../environments/environment'
 
 @Injectable()
 export class ApiResponseInterceptor implements HttpInterceptor {
 
-    constructor(private notificationService: NotificationService) { }
+    // constructor(private notificationService: NotificationService) { }
+    constructor() {
+
+    }
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(request).pipe(
@@ -198,14 +201,14 @@ export class ApiResponseInterceptor implements HttpInterceptor {
         }
 
         // Show notification with appropriate severity
-        if (status >= 500) {
-            this.notificationService.showError(errorMessage, title)
-        } else if (status === 401) {
-            this.notificationService.showWarning(errorMessage, title)
-        } else if (status >= 400) {
-            this.notificationService.showWarning(errorMessage, title)
-        } else {
-            this.notificationService.showError(errorMessage, title)
-        }
+        // if (status >= 500) {
+        //     this.notificationService.showError(errorMessage, title)
+        // } else if (status === 401) {
+        //     this.notificationService.showWarning(errorMessage, title)
+        // } else if (status >= 400) {
+        //     this.notificationService.showWarning(errorMessage, title)
+        // } else {
+        //     this.notificationService.showError(errorMessage, title)
+        // }
     }
 }

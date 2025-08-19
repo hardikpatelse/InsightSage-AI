@@ -1,0 +1,60 @@
+<!-- Chat Messages Area -->
+<div class="chat-messages" #chatContainer>
+    <p-scrollPanel class="chat-scroll">
+        <div class="messages-container">
+            @for (message of messages; track message.id) {
+            <div class="message-wrapper" [ngClass]="{ 'user-message': message.isUser, 'ai-message': !message.isUser }">
+
+                <!-- AI Message (Left Side) -->
+                @if (!message.isUser) {
+                <div class="flex gap-3 mb-4">
+                    <p-avatar icon="pi pi-sparkles" class="ai-avatar" size="normal" shape="circle">
+                    </p-avatar>
+                    <div class="message-content ai-content">
+                        <div class="message-bubble ai-bubble">
+                            <p class="m-0">{{ message.content }}</p>
+                        </div>
+                        <small class="message-time text-color-secondary">
+                            {{ message.timestamp ? formatTime(message.timestamp) : '' }}
+                        </small>
+                    </div>
+                </div>
+                }
+
+                <!-- User Message (Right Side) -->
+                @if (message.isUser) {
+                <div class="flex gap-3 mb-4 justify-content-end">
+                    <div class="message-content user-content">
+                        <div class="message-bubble user-bubble">
+                            <p class="m-0">{{ message.content }}</p>
+                        </div>
+                        <small class="message-time text-color-secondary text-right">
+                            {{ message.timestamp ? formatTime(message.timestamp) : '' }}
+                        </small>
+                    </div>
+                    <p-avatar icon="pi pi-user" class="user-avatar" size="normal" shape="circle">
+                    </p-avatar>
+                </div>
+                }
+            </div>
+            }
+
+            <!-- Loading Indicator -->
+            @if (isLoading) {
+            <div class="flex gap-3 mb-4">
+                <p-avatar icon="pi pi-sparkles" class="ai-avatar" size="normal" shape="circle">
+                </p-avatar>
+                <div class="message-content ai-content">
+                    <div class="message-bubble ai-bubble typing-indicator">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </p-scrollPanel>
+</div>

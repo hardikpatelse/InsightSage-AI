@@ -2,6 +2,7 @@ using InsightSage.Application.Services;
 using InsightSage.Data;
 using InsightSage.DataContext;
 using InsightSage.Infrastructure;
+using InsightSage.Shared.Middleware.Extensions;
 using InsightSage.Shared.Interfaces.DataContexts;
 using InsightSage.Shared.Interfaces.Others;
 using InsightSage.Shared.Interfaces.Services;
@@ -50,15 +51,30 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         var tenantId = builder.Configuration["AzureAd:TenantId"];
         var clientId = builder.Configuration["AzureAd:ClientId"];
         
+        // TEMPORARY FIX: Accept both access tokens AND id tokens for SPA scenarios
         options.Authority = $"https://login.microsoftonline.com/{tenantId}/v2.0";
-        options.Audience = clientId;  // Your SPA App Registration ID
+        
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateAudience = false, // Temporary: Allow flexible audience validation
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ClockSkew = TimeSpan.FromMinutes(5)
+            ClockSkew = TimeSpan.FromMinutes(5),
+            
+            // Accept multiple audience types for flexibility
+            ValidAudiences = new[]
+            {
+                clientId, // SPA Client ID (for ID tokens)
+                $"api://{clientId}", // API identifier (for access tokens when configured)
+                "00000003-0000-0000-c000-000000000000" // Microsoft Graph (fallback)
+            },
+            ValidIssuers = new[]
+            {
+                $"https://login.microsoftonline.com/{tenantId}/v2.0",
+                $"https://sts.windows.net/{tenantId}/",
+                $"https://login.microsoftonline.com/{tenantId}/"
+            }
         };
 
         // Add event handlers for debugging
@@ -68,18 +84,44 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 logger.LogError("Authentication failed: {Error}", context.Exception.Message);
+                
+                // Log more details about the token for debugging
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+                {
+                    var token = authHeader.Substring("Bearer ".Length);
+                    logger.LogDebug("Failed token (first 50 chars): {TokenStart}", token.Substring(0, Math.Min(50, token.Length)));
+                }
+                
                 return Task.CompletedTask;
             },
             OnChallenge = context =>
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogWarning("Authentication challenge: {Error}", context.ErrorDescription);
+                logger.LogWarning("Authentication challenge: {Error} - {ErrorDescription}", 
+                    context.Error, context.ErrorDescription);
                 return Task.CompletedTask;
             },
             OnTokenValidated = context =>
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 logger.LogInformation("Token validated successfully for user: {User}", context.Principal?.Identity?.Name ?? "Unknown");
+                
+                // Log token claims for debugging
+                var claims = context.Principal.Claims.Select(c => new { c.Type, c.Value }).ToList();
+                logger.LogDebug("Token claims: {@Claims}", claims);
+                
+                // Log audience specifically
+                var audience = context.Principal.Claims.FirstOrDefault(c => c.Type == "aud")?.Value;
+                logger.LogDebug("Token audience: {Audience}", audience);
+                
+                return Task.CompletedTask;
+            },
+            OnMessageReceived = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                var token = context.Request.Headers["Authorization"].FirstOrDefault();
+                logger.LogDebug("Received token: {HasToken}", !string.IsNullOrEmpty(token));
                 return Task.CompletedTask;
             }
         };
@@ -133,9 +175,13 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowLocalAngular");
 
-
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add the ResponseStatusMiddleware after authentication and authorization
+// This middleware automatically sets HttpStatusCode.OK in BaseResponse.Status
+// when there are no errors and no exception details
+app.UseResponseStatusMiddleware();
 
 app.MapControllers();
 

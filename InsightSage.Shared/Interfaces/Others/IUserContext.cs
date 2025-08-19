@@ -2,9 +2,10 @@
 {
     public interface IUserContext
     {
-        string? UserId { get; }
+        Guid UserId { get; }
         string? Email { get; }
         string? Name { get; }
         string? TenantId { get; }
+        string? Role { get; }
     }
 }

@@ -1,7 +1,6 @@
 ﻿namespace InsightSage.Shared.Models.Responses.Common
 {
-    public class DeleteEntityResponse : BaseResponse
+    public class DeleteEntityResponse : EntitiesResponse<string>
     {
-        public string Result { get; set; } = string.Empty;
     }
 }
