@@ -29,4 +29,8 @@
     <ProjectReference Include="..\InsightSage.Shared\InsightSage.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Middleware\" />
+  </ItemGroup>
+
 </Project>

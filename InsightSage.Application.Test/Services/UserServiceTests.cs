@@ -41,7 +41,7 @@ namespace InsightSage.Application.Test.Services
 
             // Assert
             result.Should().NotBeNull();
-            result.Id.Should().Be(expectedId);
+            result.Result.Should().Be(expectedId);
             result.Status.Should().Be(HttpStatusCode.OK);
             result.Errors.Should().BeEmpty();
 
@@ -66,7 +66,7 @@ namespace InsightSage.Application.Test.Services
 
             // Assert
             result.Should().NotBeNull();
-            result.Id.Should().Be(0);
+            result.Result.Should().Be(0);
             result.Status.Should().Be(HttpStatusCode.InternalServerError);
             result.Errors.Should().HaveCount(1);
             result.Errors.First().Should().Be(exceptionMessage);
@@ -76,7 +76,7 @@ namespace InsightSage.Application.Test.Services
         public async Task GetCurrentUser_WhenUserContextHasData_ShouldReturnCurrentUser()
         {
             // Arrange
-            var expectedUserId = "user-123";
+            var expectedUserId = Guid.NewGuid();
             var expectedEmail = "test@example.com";
             var expectedName = "Test User";
             var expectedTenantId = "tenant-123";
@@ -92,7 +92,7 @@ namespace InsightSage.Application.Test.Services
             // Assert
             result.Should().NotBeNull();
             result.Result.Should().NotBeNull();
-            result.Result.UserId.Should().Be(expectedUserId);
+            result.Result.UserId.Should().Be(expectedUserId.ToString());
             result.Result.Email.Should().Be(expectedEmail);
             result.Result.Name.Should().Be(expectedName);
             result.Result.TenantId.Should().Be(expectedTenantId);

@@ -1,0 +1,106 @@
+<div class="grid">
+    <div class="col-1">
+        <div class="card chat-container">
+            <!-- Chat Header -->
+            <!-- <div class="chat-header">
+                <div class="flex align-items-center justify-content-between">
+                    <div class="flex align-items-center gap-3">
+                        <i class="pi pi-comment text-primary text-2xl"></i>
+                        <div>
+                            <h5 class="m-0">InsightSage AI Chat</h5>
+                            <p class="text-color-secondary m-0 text-sm">Powered by {{ selectedAIModel.label }}</p>
+                        </div>
+                    </div>
+                    <div class="flex align-items-center gap-2">
+                        <p-chip [label]="selectedChatMode.label" [icon]="selectedChatMode.icon" class="p-chip-outlined">
+                        </p-chip>
+                    </div>
+                </div>
+            </div> -->
+
+            <!-- <p-divider></p-divider> -->
+
+            <app-chat-history [messages]="messages" [isLoading]="isLoading"></app-chat-history>
+
+            <!-- Chat Input Area -->
+            <div class="chat-input-area mt-3">
+                <!-- <p-divider></p-divider> -->
+
+                <!-- Mode and Model Selection -->
+                <div class="flex align-items-center gap-3 mb-3">
+                    <div class="flex align-items-center gap-2">
+                        <label class="text-sm font-medium text-color-secondary mt-2">Mode:</label>
+                        <p-select [options]="chatModes" [(ngModel)]="selectedChatMode" optionLabel="label"
+                            placeholder="Select mode" class="mode-select">
+                            <ng-template pTemplate="selectedItem">
+                                @if (selectedChatMode) {
+                                <div class="flex align-items-center gap-2">
+                                    <i [class]="selectedChatMode.icon"></i>
+                                    <span>{{ selectedChatMode.label }}</span>
+                                </div>
+                                }
+                            </ng-template>
+                            <ng-template pTemplate="item" let-mode>
+                                <div class="flex align-items-center gap-2">
+                                    <i [class]="mode.icon"></i>
+                                    <span>{{ mode.label }}</span>
+                                </div>
+                            </ng-template>
+                        </p-select>
+                    </div>
+
+                    <div class="flex align-items-center gap-2">
+                        <label class="text-sm font-medium text-color-secondary mt-2">Model:</label>
+                        <p-select [options]="aiModels" [(ngModel)]="selectedAIModel" optionLabel="name"
+                            placeholder="Select AI model" class="model-select">
+                            <ng-template pTemplate="selectedItem">
+                                @if (selectedAIModel) {
+                                <div>
+                                    <div class="font-medium">{{ selectedAIModel.name }}</div>
+                                </div>
+                                }
+                            </ng-template>
+                            <ng-template pTemplate="item" let-model>
+                                <div>
+                                    <div class="font-medium">{{ model.label }}</div>
+                                    <small class="text-color-secondary">{{ model.description }}</small>
+                                </div>
+                            </ng-template>
+                        </p-select>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="flex align-items-center mt-3 mb-3" style="justify-content: space-between;">
+                    <div class="flex align-items-center gap-2">
+                        <small class="text-color-secondary">
+                            <i class="pi pi-info-circle mr-1"></i>
+                            AI responses are generated based on your selected mode and model
+                        </small>
+                    </div>
+                    <div class="flex align-items-center gap-2" style="margin-left: auto;">
+                        <small class="text-color-secondary" style="font-style: italic;">{{ messages.length }}
+                            messages</small>
+                    </div>
+                </div>
+
+                <!-- Message Input -->
+                <div class="message-input-container">
+                    <div class="p-inputgroup">
+                        <textarea #messageInput pInputText [(ngModel)]="newMessage" (keypress)="onKeyPress($event)"
+                            placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)" rows="3"
+                            class="message-textarea" [disabled]="isLoading"
+                            pTooltip="Press Enter to send, Shift+Enter for new line" tooltipPosition="top">
+                        </textarea>
+                        <button pButton type="button" icon="pi pi-send" class="send-button"
+                            [disabled]="!newMessage.trim() || isLoading" (click)="sendMessage()" pTooltip="Send message"
+                            tooltipPosition="top">
+                        </button>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>

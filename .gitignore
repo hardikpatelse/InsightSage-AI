@@ -34,3 +34,9 @@
 /InsightSage.Application.Test/obj
 /InsightSage.API.Auth.Tests/bin/Debug/net9.0
 /InsightSage.API.Auth.Tests/obj
+/InsightSage.API.Chat/bin/Debug/net9.0
+/InsightSage.API.Chat/obj
+/InsightSage.API.Chat.Test/bin/Debug/net9.0
+/InsightSage.API.Chat.Test/obj
+/InsightSage.Shared.Middleware/bin/Debug/net9.0
+/InsightSage.Shared.Middleware/obj

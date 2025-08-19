@@ -26,7 +26,6 @@ namespace InsightSage.API.Auth.Controllers
             try
             {
                 result = await _userService.GetCurrentUser();
-                result.Status = HttpStatusCode.OK;
             }
             catch (Exception ex)
             {
@@ -66,10 +65,6 @@ namespace InsightSage.API.Auth.Controllers
                 if (result.Errors.Any())
                 {
                     result.Status = HttpStatusCode.InternalServerError;
-                }
-                else
-                {
-                    result.Status = HttpStatusCode.OK;
                 }
             }
             catch (Exception ex)

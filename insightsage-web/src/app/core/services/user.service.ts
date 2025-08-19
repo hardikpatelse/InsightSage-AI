@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core'
 import { environment } from '../../../environments/environment'
 import { DataProviderService } from './base/data-provider-service'
 import { ApiService } from './api.service'
-import { map, Observable, of, switchMap, BehaviorSubject, from, catchError, tap } from 'rxjs'
+import { map, Observable, of, switchMap, BehaviorSubject, from, catchError, tap, Subject, shareReplay } from 'rxjs'
 import { MsalService } from '@azure/msal-angular'
 import { User } from '../entities/user'
 import { AccountInfo } from '@azure/msal-browser'
@@ -16,16 +16,13 @@ export class UserService {
   private baseUrl: string = environment.authApiBaseUrl;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private initializationPromise: Promise<void>
-  // private syncInProgress = false; // Removed, replaced by RxJS-based sync logic
   private lastSyncTime: number = 0;
   private syncCooldownMs = 5000; // 5 seconds cooldown between syncs
 
-  private syncUserSubject = new Subject<void>();
-  public syncUser$ = this.syncUserSubject.pipe(
-    // Only allow one sync at a time, cancel previous if new request comes in
-    switchMap(() => this.performUserSync()),
-    shareReplay(1)
-  );
+  // RxJS-based sync management to prevent race conditions
+  private syncSubject = new Subject<{ forceSync: boolean }>();
+  private syncInProgress$!: Observable<User | null>
+
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(
@@ -36,6 +33,70 @@ export class UserService {
   ) {
     // Initialize MSAL and user on service creation
     this.initializationPromise = this.initializeMsal()
+
+    // Set up RxJS-based sync management
+    this.setupSyncManagement()
+  }
+
+  /**
+   * Set up RxJS-based sync management to prevent race conditions
+   */
+  private setupSyncManagement(): void {
+    this.syncInProgress$ = this.syncSubject.pipe(
+      // Use switchMap to cancel previous sync requests if a new one comes in
+      switchMap(({ forceSync }) => this.performUserProfileSync(forceSync)),
+      // Share the result among multiple subscribers and replay the last result
+      shareReplay(1),
+      // Handle errors gracefully
+      catchError(error => {
+        console.error('Sync error in stream:', error)
+        return of(null)
+      })
+    )
+  }
+
+  /**
+   * Perform the actual user profile sync operation
+   */
+  private performUserProfileSync(forceSync: boolean): Observable<User | null> {
+    const now = Date.now()
+
+    // If recently synced and not forcing, return current user
+    if (!forceSync && (now - this.lastSyncTime) < this.syncCooldownMs && this.currentUserSubject.value) {
+      console.log('Recent sync found, returning cached user')
+      return of(this.currentUserSubject.value)
+    }
+
+    // Perform the actual sync
+    return this.syncUserProfileWithBackend().pipe(
+      tap(user => {
+        this.lastSyncTime = now
+        if (user) {
+          this.currentUserSubject.next(user)
+        }
+      }),
+      catchError(error => {
+        console.warn('Failed to sync user profile with backend, trying basic sync:', error)
+        // Fall back to basic sync if enriched sync fails
+        return this.syncUserWithBackend().pipe(
+          tap(user => {
+            this.lastSyncTime = now
+            if (user) {
+              this.currentUserSubject.next(user)
+            }
+          }),
+          catchError(basicSyncError => {
+            console.warn('Failed to sync user with backend, using local user data:', basicSyncError)
+            const localUser = this.getCurrentUserSync()
+            if (localUser) {
+              this.currentUserSubject.next(localUser)
+              return of(localUser)
+            }
+            throw basicSyncError
+          })
+        )
+      })
+    )
   }
 
   /**
@@ -74,6 +135,7 @@ export class UserService {
    */
   private initializeUser(): void {
     const account = this.msalService.instance.getActiveAccount()
+    console.log('Initializing user from MSAL account:', account)
     if (account) {
       const user = this.mapAccountToUser(account)
       console.log('User initialized from existing account:', user)
@@ -81,23 +143,17 @@ export class UserService {
       // Try to sync enriched profile with backend to ensure user info is up to date
       this.syncUserProfileWithBackendCached(false).subscribe({
         next: (backendUser) => {
-          console.log('User profile synced with backend on initialization:', backendUser)
-          this.currentUserSubject.next(backendUser)
+          if (backendUser) {
+            console.log('User profile synced with backend on initialization:', backendUser)
+            this.currentUserSubject.next(backendUser)
+          } else {
+            console.warn('Failed to sync user profile with backend on initialization, using local user data')
+            this.currentUserSubject.next(user)
+          }
         },
-        error: (profileSyncError) => {
-          console.warn('Failed to sync user profile with backend on initialization, trying basic sync:', profileSyncError)
-          // Fall back to basic sync if enriched sync fails
-          this.syncUserWithBackend().subscribe({
-            next: (backendUser) => {
-              console.log('User synced with backend on initialization (basic):', backendUser)
-              this.currentUserSubject.next(backendUser)
-            },
-            error: (basicSyncError) => {
-              console.warn('Failed to sync user with backend on initialization, using local user data:', basicSyncError)
-              // Fall back to local user data if all syncs fail
-              this.currentUserSubject.next(user)
-            }
-          })
+        error: (syncError) => {
+          console.warn('Failed to sync user profile with backend on initialization:', syncError)
+          this.currentUserSubject.next(user)
         }
       })
     }
@@ -115,24 +171,20 @@ export class UserService {
 
           // Try to sync enriched profile with backend (but don't force if recently synced)
           return this.syncUserProfileWithBackendCached(false).pipe(
-            map(backendUser => {
-              this.currentUserSubject.next(backendUser)
-              return backendUser
+            switchMap(backendUser => {
+              if (backendUser) {
+                this.currentUserSubject.next(backendUser)
+                return of(backendUser)
+              } else {
+                // Fall back to local user if sync failed
+                this.currentUserSubject.next(user)
+                return of(user)
+              }
             }),
-            catchError(profileSyncError => {
-              console.warn('Failed to sync user profile with backend in getCurrentUser, trying basic sync:', profileSyncError)
-              // Fall back to basic sync if enriched sync fails
-              return this.syncUserWithBackend().pipe(
-                map(backendUser => {
-                  this.currentUserSubject.next(backendUser)
-                  return backendUser
-                }),
-                catchError(basicSyncError => {
-                  console.warn('Failed to sync user with backend in getCurrentUser, using local user data:', basicSyncError)
-                  this.currentUserSubject.next(user)
-                  return of(user)
-                })
-              )
+            catchError(syncError => {
+              console.warn('Failed to sync user profile with backend in getCurrentUser, using local user data:', syncError)
+              this.currentUserSubject.next(user)
+              return of(user)
             })
           )
         }
@@ -212,37 +264,32 @@ export class UserService {
             // Set the account as active
             this.msalService.instance.setActiveAccount(result.account)
             const user = this.mapAccountToUser(result.account)
-
+            console.log('User logged in via popup:', user)
             // Try to sync enriched user profile with backend after successful login
             this.syncUserProfileWithBackendCached(true).subscribe({
               next: (backendUser) => {
-                console.log('User profile synced with backend:', backendUser)
-                this.notificationService.showSuccess(`Welcome back, ${backendUser.name}!`, 'Login Successful')
-                // Update user with backend data (including user ID)
-                this.currentUserSubject.next(backendUser)
-                observer.next(backendUser)
-                observer.complete()
+                if (backendUser) {
+                  console.log('User profile synced with backend:', backendUser)
+                  this.notificationService.showSuccess(`Welcome back, ${backendUser.name}!`, 'Login Successful')
+                  // Update user with backend data (including user ID)
+                  this.currentUserSubject.next(backendUser)
+                  observer.next(backendUser)
+                  observer.complete()
+                } else {
+                  console.warn('Failed to sync user profile with backend, using local user data')
+                  this.notificationService.showWarning('Login successful, but user data sync failed.', 'Partial Success')
+                  this.currentUserSubject.next(user)
+                  observer.next(user)
+                  observer.complete()
+                }
               },
               error: (syncError) => {
-                console.warn('Failed to sync user profile with backend, trying basic sync:', syncError)
-                // Fall back to basic sync if enriched sync fails
-                this.syncUserWithBackend().subscribe({
-                  next: (backendUser) => {
-                    console.log('User synced with backend (basic):', backendUser)
-                    this.notificationService.showSuccess(`Welcome back, ${backendUser.name}!`, 'Login Successful')
-                    this.currentUserSubject.next(backendUser)
-                    observer.next(backendUser)
-                    observer.complete()
-                  },
-                  error: (basicSyncError) => {
-                    console.warn('Failed to sync user with backend, using local user data:', basicSyncError)
-                    this.notificationService.showWarning('Login successful, but user data sync failed.', 'Partial Success')
-                    // Fall back to local user data if all syncs fail
-                    this.currentUserSubject.next(user)
-                    observer.next(user)
-                    observer.complete()
-                  }
-                })
+                console.warn('Failed to sync user profile with backend:', syncError)
+                this.notificationService.showWarning('Login successful, but user data sync failed.', 'Partial Success')
+                // Fall back to local user data if sync fails
+                this.currentUserSubject.next(user)
+                observer.next(user)
+                observer.complete()
               }
             })
           } else {
@@ -290,52 +337,12 @@ export class UserService {
   }
 
   /**
-   * Get detailed user profile and sync it with backend (with caching to prevent duplicate calls)
+   * Get detailed user profile and sync it with backend (with RxJS-based caching to prevent race conditions)
    */
-  private syncUserProfileWithBackendCached(forceSync: boolean = false): Observable<User> {
-    const now = Date.now()
-
-    // If sync is already in progress, return the current user or wait
-    if (this.syncInProgress && !forceSync) {
-      return of(this.currentUserSubject.value).pipe(
-        switchMap(currentUser => {
-          if (currentUser) {
-            return of(currentUser)
-          }
-          // If no current user, wait a bit and try again
-          return new Observable<User>(observer => {
-            const checkUser = () => {
-              const user = this.currentUserSubject.value
-              if (user || !this.syncInProgress) {
-                observer.next(user!)
-                observer.complete()
-              } else {
-                setTimeout(checkUser, 100)
-              }
-            }
-            checkUser()
-          })
-        })
-      )
-    }
-
-    // If recently synced and not forcing, return current user
-    if (!forceSync && (now - this.lastSyncTime) < this.syncCooldownMs && this.currentUserSubject.value) {
-      return of(this.currentUserSubject.value)
-    }
-
-    // Perform the actual sync
-    this.syncInProgress = true
-    return this.syncUserProfileWithBackend().pipe(
-      tap(user => {
-        this.lastSyncTime = now
-        this.syncInProgress = false
-      }),
-      catchError(error => {
-        this.syncInProgress = false
-        throw error
-      })
-    )
+  private syncUserProfileWithBackendCached(forceSync: boolean = false): Observable<User | null> {
+    // Trigger the sync through the subject and subscribe to the shared observable
+    this.syncSubject.next({ forceSync })
+    return this.syncInProgress$
   }
 
   /**
@@ -423,7 +430,6 @@ export class UserService {
    * Clear sync cache (useful for logout or when forcing fresh data)
    */
   private clearSyncCache(): void {
-    this.syncInProgress = false
     this.lastSyncTime = 0
   }
 
@@ -437,13 +443,52 @@ export class UserService {
     }
 
     return this.syncUserProfileWithBackendCached(true).pipe(
-      map(backendUser => {
-        this.currentUserSubject.next(backendUser)
-        return backendUser
+      switchMap(backendUser => {
+        if (backendUser) {
+          this.currentUserSubject.next(backendUser)
+          return of(backendUser)
+        } else {
+          return of(this.currentUserSubject.value)
+        }
       }),
       catchError(error => {
         console.error('Failed to refresh user data:', error)
         return of(this.currentUserSubject.value)
+      })
+    )
+  }
+
+  /**
+   * Validate user authentication with backend
+   * This method ensures both MSAL authentication and backend sync are valid
+   */
+  validateUserAuthentication(): Observable<boolean> {
+    return from(this.initializationPromise).pipe(
+      switchMap(() => {
+        // First check MSAL authentication
+        const account = this.msalService.instance.getActiveAccount()
+        if (!account) {
+          console.log('UserService: No MSAL account found')
+          return of(false)
+        }
+
+        // If MSAL account exists, validate with backend
+        console.log('UserService: MSAL account found, validating with backend...')
+        return this.getCurrentUser().pipe(
+          map(user => {
+            const isValid = !!user
+            console.log('UserService: Backend validation result:', isValid ? 'success' : 'failed')
+            return isValid
+          }),
+          catchError(error => {
+            console.error('UserService: Backend validation error:', error)
+            return of(false)
+          })
+        )
+      }),
+      catchError(error => {
+        console.error('UserService: Authentication validation error:', error)
+        return of(false)
       })
     )
   }

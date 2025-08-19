@@ -1,0 +1,134 @@
+// Messages Area Styles
+.chat-messages {
+    flex: 1;
+    overflow: hidden;
+
+    .chat-scroll {
+        background: var(--surface-card);
+
+        .p-scrollpanel-content {
+            padding: 0;
+        }
+    }
+}
+
+.messages-container {
+    padding: 1.5rem;
+    min-height: calc(100vh - 345px);
+    overflow-y: auto;
+}
+
+// Message Bubble Styles
+.message-wrapper {
+    width: 100%;
+    display: flex;
+
+    &.user-message {
+        justify-content: flex-end !important;
+
+        .message-content {
+            align-items: flex-end;
+        }
+    }
+
+    &.ai-message {
+        justify-content: flex-start;
+
+        .message-content {
+            align-items: flex-start;
+        }
+    }
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+
+    &.user-content {
+        align-items: flex-end;
+    }
+
+    &.ai-content {
+        align-items: flex-start;
+    }
+}
+
+.message-bubble {
+    padding: 1rem 1.25rem;
+    border-radius: 18px;
+    word-wrap: break-word;
+    position: relative;
+
+    &.user-bubble {
+        background: var(--primary-color);
+        color: var(--primary-color-text);
+        border-bottom-right-radius: 6px;
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: -6px;
+            width: 0;
+            height: 0;
+            border: 6px solid transparent;
+            border-top-color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+    }
+
+    &.ai-bubble {
+        background: var(--surface-border);
+        color: var(--text-color);
+        border-bottom-left-radius: 6px;
+        border: 1px solid var(--surface-border);
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -7px;
+            width: 0;
+            height: 0;
+            border: 6px solid transparent;
+            border-top-color: var(--surface-border);
+            border-right-color: var(--surface-border);
+        }
+    }
+
+    p {
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+}
+
+.message-time {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+// Avatar Styles
+.ai-avatar {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-400));
+    color: white;
+
+    .p-avatar-icon {
+        font-size: 1rem;
+    }
+}
+
+.user-avatar {
+    background: var(--surface-300);
+    color: var(--text-color);
+
+    .p-avatar-icon {
+        font-size: 1rem;
+    }
+}
+
+.chat-scroll {
+    height: calc(100vh - 360px);
+    width: 100%;
+}

@@ -7,7 +7,7 @@
         "Action": "Start"
       },
       {
-        "Path": "InsightSage.API.Core\\InsightSage.API.Core.csproj",
+        "Path": "InsightSage.API.Chat\\InsightSage.API.Chat.csproj",
         "Action": "Start"
       }
     ]

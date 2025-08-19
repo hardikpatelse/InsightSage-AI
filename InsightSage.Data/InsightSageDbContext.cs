@@ -13,6 +13,8 @@ namespace InsightSage.Data
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<ChatSession> ChatSessions { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) 
         {
@@ -63,6 +65,87 @@ namespace InsightSage.Data
                     
                 entity.HasIndex(e => e.TenantId)
                     .HasDatabaseName("IX_Users_TenantId");
+            });
+
+            // Configure ChatSession entity
+            modelBuilder.Entity<ChatSession>(entity =>
+            {
+                // Configure primary key with identity
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id)
+                    .ValueGeneratedOnAdd()
+                    .UseIdentityColumn(1, 1);
+
+                // Configure properties
+                entity.Property(e => e.Name)
+                    .HasMaxLength(200)
+                    .IsRequired();
+
+                entity.Property(e => e.UniqueIdentity)
+                    .IsRequired();
+
+                entity.Property(e => e.UserId)
+                    .IsRequired();
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                // Create unique constraint on UniqueIdentity
+                entity.HasIndex(e => e.UniqueIdentity)
+                    .IsUnique()
+                    .HasDatabaseName("IX_ChatSessions_UniqueIdentity");
+
+                // Create index on UserId for better performance
+                entity.HasIndex(e => e.UserId)
+                    .HasDatabaseName("IX_ChatSessions_UserId");
+
+                // Create composite index for user and name searches
+                entity.HasIndex(e => new { e.UserId, e.Name })
+                    .HasDatabaseName("IX_ChatSessions_UserId_Name");
+            });
+
+            // Configure ChatMessage entity
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                // Configure primary key with identity
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id)
+                    .ValueGeneratedOnAdd()
+                    .UseIdentityColumn(1, 1);
+
+                // Configure properties
+                entity.Property(e => e.Role)
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                entity.Property(e => e.Content)
+                    .IsRequired();
+
+                entity.Property(e => e.ChatSessionId)
+                    .IsRequired();
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                // Configure relationship with ChatSession
+                entity.HasOne<ChatSession>()
+                    .WithMany()
+                    .HasForeignKey(e => e.ChatSessionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Create index on ChatSessionId for better performance
+                entity.HasIndex(e => e.ChatSessionId)
+                    .HasDatabaseName("IX_ChatMessages_ChatSessionId");
             });
         }
     }
