@@ -30,20 +30,20 @@
                 <div class="flex align-items-center gap-3 mb-3">
                     <div class="flex align-items-center gap-2">
                         <label class="text-sm font-medium text-color-secondary mt-2">Mode:</label>
-                        <p-select [options]="chatModes" [(ngModel)]="selectedChatMode" optionLabel="label"
+                        <p-select [options]="chatModes" [(ngModel)]="selectedChatMode" optionLabel="name"
                             placeholder="Select mode" class="mode-select">
                             <ng-template pTemplate="selectedItem">
                                 @if (selectedChatMode) {
                                 <div class="flex align-items-center gap-2">
-                                    <i [class]="selectedChatMode.icon"></i>
-                                    <span>{{ selectedChatMode.label }}</span>
+                                    <i [class]="selectedChatMode.iconName"></i>
+                                    <span>{{ selectedChatMode.name }}</span>
                                 </div>
                                 }
                             </ng-template>
                             <ng-template pTemplate="item" let-mode>
                                 <div class="flex align-items-center gap-2">
-                                    <i [class]="mode.icon"></i>
-                                    <span>{{ mode.label }}</span>
+                                    <i [class]="mode.iconName"></i>
+                                    <span>{{ mode.name }}</span>
                                 </div>
                             </ng-template>
                         </p-select>
@@ -62,7 +62,7 @@
                             </ng-template>
                             <ng-template pTemplate="item" let-model>
                                 <div>
-                                    <div class="font-medium">{{ model.label }}</div>
+                                    <div class="font-medium">{{ model.name }}</div>
                                     <small class="text-color-secondary">{{ model.description }}</small>
                                 </div>
                             </ng-template>

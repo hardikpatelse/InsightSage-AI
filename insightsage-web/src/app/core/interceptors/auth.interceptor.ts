@@ -10,6 +10,7 @@ export class AuthInterceptor implements HttpInterceptor {
     constructor(private msalService: MsalService) { }
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+
         // Skip adding auth header for certain URLs
         if (this.shouldSkipAuth(request.url)) {
             return next.handle(request)
@@ -18,15 +19,12 @@ export class AuthInterceptor implements HttpInterceptor {
         // Get the active account
         const account = this.msalService.instance.getActiveAccount()
         if (!account) {
-            console.warn('No active account found for request:', request.url)
             // No active account, proceed without auth header
             return next.handle(request)
         }
 
         // For backend API calls, acquire token with default scopes
         const scopes = this.getScopesForUrl(request.url)
-
-        console.log('Acquiring token for backend API:', request.url, 'with scopes:', scopes)
 
         // Acquire token silently and add to request
         return from(
@@ -36,23 +34,34 @@ export class AuthInterceptor implements HttpInterceptor {
             }))
         ).pipe(
             switchMap(result => {
-                if (!result || !result.accessToken) {
-                    console.error('No ID token received for request:', request.url)
+                if (!result) {
+                    console.error('No token result received for request:', request.url)
                     return next.handle(request)
                 }
-                console.log('Token acquired successfully:', result)
-                console.log('Token acquired successfully for backend API:', request.url)
+
+                // Use ID token as fallback if access token is not available
+                const token = result.accessToken || result.idToken
+
+                if (!token) {
+                    console.error('No access token or ID token received for request:', request.url)
+                    return next.handle(request)
+                }
                 // Clone the request and add the Authorization header
                 const authRequest = request.clone({
                     setHeaders: {
-                        'Authorization': `Bearer ${result.accessToken}`
+                        'Authorization': `Bearer ${token}`
                     }
                 })
+
                 return next.handle(authRequest)
             }),
             catchError(error => {
                 console.error('Failed to acquire token for backend API:', request.url, error)
+                console.error('Error details:', error.message || error)
+                console.error('Account info:', account?.username || 'No account')
+                console.error('Requested scopes:', scopes)
                 // Proceed without auth header for backend APIs
+                console.warn('Proceeding without auth header due to token acquisition failure')
                 return next.handle(request)
             })
         )
@@ -81,6 +90,15 @@ export class AuthInterceptor implements HttpInterceptor {
      * Get appropriate scopes based on the URL being accessed
      */
     private getScopesForUrl(url: string): string[] {
+        // Microsoft Graph API calls need specific scopes
+        if (url.includes('graph.microsoft.com')) {
+            if (url.includes('/me')) {
+                return ['user.read']
+            }
+            // Add more Graph API scopes as needed
+            return ['user.read']
+        }
+
         // For your backend APIs, you might need different scopes
         // Add your custom scopes here based on the endpoint
         if (url.includes('your-api-domain.com')) {
@@ -93,11 +111,11 @@ export class AuthInterceptor implements HttpInterceptor {
 
         // Check if this is your main backend API
         if (url.includes(this.getBackendDomain())) {
-            return ['user.read'] // Or your custom backend API scope
+            return ['openid', 'profile', 'email'] // Use basic scopes for now
         }
 
         // Default scope for general API access
-        return ['user.read']
+        return ['openid', 'profile', 'email']
     }
 
     /**

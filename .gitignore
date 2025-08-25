@@ -40,3 +40,7 @@
 /InsightSage.API.Chat.Test/obj
 /InsightSage.Shared.Middleware/bin/Debug/net9.0
 /InsightSage.Shared.Middleware/obj
+/InsightSage.Shared.Tests/bin/Debug/net9.0
+/InsightSage.Shared.Tests/obj
+/InsightSage.Shared.Tests/obj
+/InsightSage.Shared.Tests_BKP/Models/Entities

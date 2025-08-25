@@ -79,6 +79,8 @@ namespace InsightSage.DataContext
         async Task<ChatSession?> IChatSessionDataContext.GetByUniqueIdentityAsync(Guid uniqueIdentity)
         {
             return await _context.ChatSessions
+                .Include(s => s.AIModel)
+                .Include(s => s.ChatMode)
                 .FirstOrDefaultAsync(s => s.UniqueIdentity == uniqueIdentity);
         }
 

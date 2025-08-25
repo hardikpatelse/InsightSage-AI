@@ -25,10 +25,10 @@ export const msalConfig: Configuration = {
                         console.error('MSAL Error:', message)
                         return
                     case LogLevel.Info:
-                        console.info('MSAL Info:', message)
+                        // console.info('MSAL Info:', message)
                         return
                     case LogLevel.Verbose:
-                        console.debug('MSAL Verbose:', message)
+                        // console.debug('MSAL Verbose:', message)
                         return
                     case LogLevel.Warning:
                         console.warn('MSAL Warning:', message)

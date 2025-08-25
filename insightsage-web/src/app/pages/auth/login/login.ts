@@ -46,7 +46,6 @@ export class Login {
       next: (user) => {
         this.isLoading = false
         if (user) {
-          console.log('Login successful:', user)
           this.router.navigate(['/chat'])
         }
       },

@@ -1,11 +1,14 @@
 import { AIModel } from '@/core/entities/ai-model'
 import { ChatMode } from '@/core/entities/chat-mode'
 import { ChatMessageExtended } from '@/core/entities/custom/chat-message-extended'
+import { ChatSession } from '@/core/entities/chat-session'
 import { ChatMessageService } from '@/core/services/chat-message.service'
 import { ChatSessionService } from '@/core/services/chat-session.service'
+import { AIModelService } from '@/core/services/ai-model.service'
+import { ChatModeService } from '@/core/services/chat-mode.service'
 import { Component, OnInit, OnDestroy } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
-import { Subject, takeUntil, switchMap } from 'rxjs'
+import { Subject, takeUntil, switchMap, Observable, tap } from 'rxjs'
 
 @Component({
   selector: 'app-chat',
@@ -22,34 +25,28 @@ export class Chat implements OnInit, OnDestroy {
   currentSessionId: number | null = null
   currentSessionUuid: string | null = null
 
-  // Chat modes similar to GitHub Copilot
-  chatModes: ChatMode[] = [
-    new ChatMode('Chat', 'chat', 'pi pi-comments'),
-    new ChatMode('Code Review', 'code-review', 'pi pi-code'),
-    new ChatMode('Explain', 'explain', 'pi pi-info-circle'),
-    new ChatMode('Fix', 'fix', 'pi pi-wrench')
-  ]
+  // Chat modes - will be loaded from service
+  chatModes: ChatMode[] = []
+  selectedChatMode: ChatMode | null = null
 
-  selectedChatMode: ChatMode = this.chatModes[0]
-
-  // AI Models
-  aiModels: AIModel[] = [
-    new AIModel(1, 'GPT-4o', 'gpt-4o', 'Most capable model for complex tasks'),
-    new AIModel(2, 'GPT-4o Mini', 'gpt-4o-mini', 'Faster responses, good for simple tasks'),
-    new AIModel(3, 'Claude 3.5 Sonnet', 'claude-3.5-sonnet', 'Great for code and analysis'),
-    new AIModel(4, 'Gemini Pro', 'gemini-pro', 'Google\'s advanced model')
-  ]
-
-  selectedAIModel: AIModel = this.aiModels[0]
+  // AI Models - will be loaded from service
+  aiModels: AIModel[] = []
+  selectedAIModel: AIModel | null = null
 
   constructor(
     private chatMessageService: ChatMessageService,
     private chatSessionService: ChatSessionService,
+    private aiModelService: AIModelService,
+    private chatModeService: ChatModeService,
     private route: ActivatedRoute,
     private router: Router
   ) { }
 
   ngOnInit() {
+    // Load chat modes and AI models
+    this.loadChatModes()
+    this.loadAIModels()
+
     // Handle route parameters for session
     this.route.params
       .pipe(takeUntil(this.destroy$))
@@ -63,6 +60,7 @@ export class Chat implements OnInit, OnDestroy {
           // New chat session
           this.currentSessionId = null
           this.currentSessionUuid = null
+          this.clearMessages()
         }
       })
 
@@ -96,6 +94,12 @@ export class Chat implements OnInit, OnDestroy {
         next: (session) => {
           this.currentSessionId = session.id || null
           this.currentSessionUuid = session.uniqueIdentity
+          if (session.aiModel) {
+            this.selectedAIModel = session.aiModel
+          }
+          if (session.chatMode) {
+            this.selectedChatMode = session.chatMode
+          }
           this.loadSessionMessages()
         },
         error: (error) => {
@@ -104,6 +108,130 @@ export class Chat implements OnInit, OnDestroy {
           this.router.navigate(['/chat'])
         }
       })
+  }
+
+  /**
+   * Load chat modes from the service
+   */
+  private loadChatModes() {
+    this.chatModeService.getActiveModes()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (modes) => {
+          this.chatModes = modes
+          // Set the default mode or first mode as selected
+          if (modes.length > 0 && !this.selectedChatMode) {
+            // Try to find 'chat' mode first, otherwise use first mode
+            const defaultMode = modes.find(mode => mode.value === 'chat') || modes[0]
+            this.selectedChatMode = defaultMode
+          }
+        },
+        error: (error) => {
+          console.error('Failed to load chat modes:', error)
+          // Use fallback modes if API fails
+          this.setFallbackChatModes()
+        }
+      })
+  }
+
+  /**
+   * Set fallback chat modes if API fails
+   */
+  private setFallbackChatModes() {
+    this.chatModes = [
+      new ChatMode({
+        id: 1,
+        name: 'Chat',
+        value: 'chat',
+        iconName: 'pi pi-comments',
+        description: 'General conversation mode',
+        isActive: true,
+        sortOrder: 1
+      }),
+      new ChatMode({
+        id: 2,
+        name: 'Code Review',
+        value: 'code-review',
+        iconName: 'pi pi-code',
+        description: 'Review and analyze code',
+        isActive: true,
+        sortOrder: 2
+      }),
+      new ChatMode({
+        id: 3,
+        name: 'Explain',
+        value: 'explain',
+        iconName: 'pi pi-info-circle',
+        description: 'Explain complex concepts',
+        isActive: true,
+        sortOrder: 3
+      }),
+      new ChatMode({
+        id: 4,
+        name: 'Fix',
+        value: 'fix',
+        iconName: 'pi pi-wrench',
+        description: 'Fix issues and bugs',
+        isActive: true,
+        sortOrder: 4
+      })
+    ]
+    this.selectedChatMode = this.chatModes[0]
+  }
+
+  /**
+   * Load AI models from the service
+   */
+  private loadAIModels() {
+    this.aiModelService.getActiveModels()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (models) => {
+          this.aiModels = models
+          // Set the first model as default if none selected
+          if (models.length > 0 && !this.selectedAIModel) {
+            this.selectedAIModel = models[0]
+          }
+        },
+        error: (error) => {
+          console.error('Failed to load AI models:', error)
+          // Use fallback models if API fails
+          this.setFallbackAIModels()
+        }
+      })
+  }
+
+  /**
+   * Set fallback AI models if API fails
+   */
+  private setFallbackAIModels() {
+    this.aiModels = [
+      new AIModel({
+        id: 1,
+        name: 'GPT-4o',
+        value: 'gpt-4o',
+        description: 'Most capable model for complex tasks',
+        isActive: true,
+        provider: 'openai'
+      }),
+      new AIModel({
+        id: 2,
+        name: 'GPT-4o Mini',
+        value: 'gpt-4o-mini',
+        description: 'Faster responses, good for simple tasks',
+        isActive: true,
+        provider: 'openai'
+      }),
+      new AIModel({
+        id: 3,
+        name: 'Claude 3.5 Sonnet',
+        value: 'claude-3.5-sonnet',
+        description: 'Great for code and analysis',
+        isActive: true,
+        provider: 'anthropic'
+      })
+    ]
+    this.selectedAIModel = this.aiModels[0]
   }
 
   /**
@@ -116,9 +244,6 @@ export class Chat implements OnInit, OnDestroy {
     this.chatMessageService.loadSessionMessages(this.currentSessionId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (messages) => {
-          console.log('Messages loaded successfully:', messages.length)
-        },
         error: (error) => {
           console.error('Failed to load messages:', error)
           // Initialize with welcome message if no messages found
@@ -132,13 +257,16 @@ export class Chat implements OnInit, OnDestroy {
    */
   private initializeWithWelcomeMessage() {
     if (this.messages.length === 0) {
+      // Get current selected AI model and chat mode IDs for welcome message
+      const aiChatModelId = this.selectedAIModel?.id ?? undefined
+      const chatModeId = this.selectedChatMode?.id ?? undefined
+
       this.chatMessageService.addAssistantMessage(
         'Hello! I\'m your AI assistant. How can I help you today?',
-        this.currentSessionId ?? 0
+        this.currentSessionId ?? 0,
+        aiChatModelId,
+        chatModeId
       ).subscribe({
-        next: () => {
-          console.log('Welcome message added')
-        },
         error: (error) => {
           console.error('Failed to add welcome message:', error)
         }
@@ -155,16 +283,19 @@ export class Chat implements OnInit, OnDestroy {
     const messageContent = this.newMessage.trim()
     this.newMessage = ''
 
+    // Get current selected AI model and chat mode IDs
+    const aiModelId = this.selectedAIModel?.id ?? undefined
+    const chatModeId = this.selectedChatMode?.id ?? undefined
+
     // Send user message via service
-    this.chatMessageService.sendUserMessage(messageContent, this.currentSessionId ?? 0)
+    this.chatMessageService.sendUserMessage(
+      messageContent,
+      this.currentSessionId ?? 0,
+      aiModelId,
+      chatModeId
+    )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (messageId) => {
-          console.log('User message sent successfully:', messageId)
-
-          // Simulate AI response after a delay
-          this.simulateAIResponse(messageContent)
-        },
         error: (error) => {
           console.error('Failed to send message:', error)
           this.newMessage = messageContent // Restore message if failed
@@ -176,20 +307,20 @@ export class Chat implements OnInit, OnDestroy {
    * Simulate AI response (replace with real AI integration)
    */
   private simulateAIResponse(userMessage: string) {
-    setTimeout(() => {
-      const aiResponse = this.generateAIResponse(userMessage)
+    // setTimeout(() => {
+    //   const aiResponse = this.generateAIResponse(userMessage)
 
-      this.chatMessageService.addAssistantMessage(aiResponse, this.currentSessionId ?? 0)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (messageId) => {
-            console.log('AI response added successfully:', messageId)
-          },
-          error: (error) => {
-            console.error('Failed to add AI response:', error)
-          }
-        })
-    }, 1500)
+    //   this.chatMessageService.addAssistantMessage(aiResponse, this.currentSessionId ?? 0)
+    //     .pipe(takeUntil(this.destroy$))
+    //     .subscribe({
+    //       next: (messageId) => {
+    //         console.log('AI response added successfully:', messageId)
+    //       },
+    //       error: (error) => {
+    //         console.error('Failed to add AI response:', error)
+    //       }
+    //     })
+    // }, 1500)
   }
 
   /**
@@ -205,17 +336,17 @@ export class Chat implements OnInit, OnDestroy {
   /**
    * Generate AI response based on selected mode (mock implementation)
    */
-  private generateAIResponse(userMessage: string): string {
-    const responses = {
-      'chat': `I understand you're asking about: "${userMessage}". Let me help you with that.`,
-      'code-review': `Here's my code review analysis for: "${userMessage}". I notice a few areas for improvement...`,
-      'explain': `Let me explain "${userMessage}" in detail...`,
-      'fix': `I'll help you fix the issue with: "${userMessage}". Here's the solution...`
-    }
+  // private generateAIResponse(userMessage: string): string {
+  //   const responses = {
+  //     'chat': `I understand you're asking about: "${userMessage}". Let me help you with that.`,
+  //     'code-review': `Here's my code review analysis for: "${userMessage}". I notice a few areas for improvement...`,
+  //     'explain': `Let me explain "${userMessage}" in detail...`,
+  //     'fix': `I'll help you fix the issue with: "${userMessage}". Here's the solution...`
+  //   }
 
-    return responses[this.selectedChatMode.value as keyof typeof responses] ||
-      `Thanks for your message: "${userMessage}". How can I assist you further?`
-  }
+  //   return responses[this.selectedChatMode.value as keyof typeof responses] ||
+  //     `Thanks for your message: "${userMessage}". How can I assist you further?`
+  // }
 
   /**
    * Format timestamp for display
@@ -229,6 +360,37 @@ export class Chat implements OnInit, OnDestroy {
    */
   refreshMessages() {
     this.chatMessageService.refreshCurrentSessionMessages()
+  }
+
+  /**
+   * Create a new chat session with current AI model and chat mode settings
+   */
+  createNewChatSession(sessionName?: string): Observable<ChatSession> {
+    const aiModelId = this.selectedAIModel?.id ?? undefined
+    const chatModeId = this.selectedChatMode?.id ?? undefined
+
+    return this.chatSessionService.createNewSession(
+      sessionName,
+      aiModelId,
+      chatModeId
+    ).pipe(
+      tap(newSession => {
+        // Navigate to the new session
+        this.router.navigate(['/chat', newSession.uniqueIdentity])
+      })
+    )
+  }
+
+  /**
+   * Start a new chat with current settings
+   */
+  startNewChat(): void {
+    const sessionName = `Chat Session ${new Date().toLocaleString()}`
+    this.createNewChatSession(sessionName).subscribe({
+      error: (error) => {
+        console.error('Failed to create new chat session:', error)
+      }
+    })
   }
 
   /**

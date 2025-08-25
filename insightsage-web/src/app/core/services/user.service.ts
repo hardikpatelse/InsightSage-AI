@@ -63,7 +63,6 @@ export class UserService {
 
     // If recently synced and not forcing, return current user
     if (!forceSync && (now - this.lastSyncTime) < this.syncCooldownMs && this.currentUserSubject.value) {
-      console.log('Recent sync found, returning cached user')
       return of(this.currentUserSubject.value)
     }
 
@@ -106,7 +105,6 @@ export class UserService {
     try {
       // Wait for MSAL instance to be ready
       await this.msalService.instance.initialize()
-      console.log('MSAL initialized successfully')
 
       await this.handleRedirectPromise()
 
@@ -135,16 +133,13 @@ export class UserService {
    */
   private initializeUser(): void {
     const account = this.msalService.instance.getActiveAccount()
-    console.log('Initializing user from MSAL account:', account)
     if (account) {
       const user = this.mapAccountToUser(account)
-      console.log('User initialized from existing account:', user)
 
       // Try to sync enriched profile with backend to ensure user info is up to date
       this.syncUserProfileWithBackendCached(false).subscribe({
         next: (backendUser) => {
           if (backendUser) {
-            console.log('User profile synced with backend on initialization:', backendUser)
             this.currentUserSubject.next(backendUser)
           } else {
             console.warn('Failed to sync user profile with backend on initialization, using local user data')
@@ -259,17 +254,14 @@ export class UserService {
 
       this.msalService.loginPopup(popupRequest).subscribe({
         next: (result) => {
-          console.log('Popup login result:', result)
           if (result.account) {
             // Set the account as active
             this.msalService.instance.setActiveAccount(result.account)
             const user = this.mapAccountToUser(result.account)
-            console.log('User logged in via popup:', user)
             // Try to sync enriched user profile with backend after successful login
             this.syncUserProfileWithBackendCached(true).subscribe({
               next: (backendUser) => {
                 if (backendUser) {
-                  console.log('User profile synced with backend:', backendUser)
                   this.notificationService.showSuccess(`Welcome back, ${backendUser.name}!`, 'Login Successful')
                   // Update user with backend data (including user ID)
                   this.currentUserSubject.next(backendUser)
@@ -315,19 +307,15 @@ export class UserService {
       throw new Error('No active account found')
     }
 
-    console.log('Getting user profile for account:', account.username)
-
     return this.msalService.acquireTokenSilent({
       scopes: ['user.read'],
       account: account
     }).pipe(
       switchMap(result => {
-        console.log('Token acquired for Graph API:', !!result.accessToken)
         const headers = { 'Authorization': `Bearer ${result.accessToken}` }
         return this.dataProviderService.getData<any>('https://graph.microsoft.com', 'v1.0/me', headers)
       }),
       tap(profile => {
-        console.log('Microsoft Graph user profile:', profile)
       }),
       catchError(error => {
         console.error('Error getting user profile:', error)
@@ -468,16 +456,13 @@ export class UserService {
         // First check MSAL authentication
         const account = this.msalService.instance.getActiveAccount()
         if (!account) {
-          console.log('UserService: No MSAL account found')
           return of(false)
         }
 
         // If MSAL account exists, validate with backend
-        console.log('UserService: MSAL account found, validating with backend...')
         return this.getCurrentUser().pipe(
           map(user => {
             const isValid = !!user
-            console.log('UserService: Backend validation result:', isValid ? 'success' : 'failed')
             return isValid
           }),
           catchError(error => {

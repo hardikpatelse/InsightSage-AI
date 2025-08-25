@@ -16,12 +16,10 @@ export class AuthGuard implements CanActivate {
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean> | boolean {
-        console.log('AuthGuard: Validating access to:', state.url)
 
         return this.userService.validateUserAuthentication().pipe(
             tap(isValid => {
                 if (!isValid) {
-                    console.log('AuthGuard: Authentication validation failed, redirecting to login')
                     this.router.navigate(['/auth/login'])
                 } else {
                     console.log('AuthGuard: Authentication validation successful')

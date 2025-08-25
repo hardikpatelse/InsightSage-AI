@@ -8,6 +8,7 @@ import { ChatMessagesResponse } from '../entities/responses/chat-messages-respon
 import { AddUpdateEntityResponse } from '../entities/common/add-update-entity-response'
 import { DeleteEntityResponse } from '../entities/common/delete-entity-response'
 import { ChatMessageExtended } from '../entities/custom/chat-message-extended'
+import { ChatMessageRequest } from '../entities/requests/chat-message-request'
 
 /**
  * Service for managing chat messages with comprehensive API integration
@@ -90,12 +91,10 @@ export class ChatMessageService {
         return this.apiService.get<ChatMessage[]>(this.baseUrl, `${this.endpoint}/session/${sessionId}`).pipe(
             map(messages => {
                 this.loadingSubject.next(false)
-                console.log('ChatMessageService - getMessagesBySessionId response (unwrapped by interceptor):', messages)
 
                 // The interceptor automatically unwraps successful responses, so we get the array directly
                 const messageArray = Array.isArray(messages) ? messages : []
 
-                console.log('ChatMessageService - extracted messages:', messageArray)
                 const uiMessages = this.convertToExtendedMessages(messageArray)
                 this.messagesSubject.next(uiMessages)
                 this.currentSessionIdSubject.next(sessionId)
@@ -114,15 +113,24 @@ export class ChatMessageService {
      * POST /api/Message
      * Create a new chat message
      */
-    createMessage(message: Partial<ChatMessage>): Observable<number> {
+    createMessage(request: Partial<ChatMessageRequest>): Observable<number> {
         this.loadingSubject.next(true)
 
-        const messagePayload: Partial<ChatMessage> = {
-            chatSessionId: message.chatSessionId,
-            role: message.role,
-            content: message.content,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+        if (!request.message) {
+            this.loadingSubject.next(false)
+            return throwError(() => new Error('Message is required'))
+        }
+
+        const messagePayload: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: request.message.chatSessionId,
+                role: request.message.role,
+                content: request.message.content,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            aiModelId: request.aiModelId,
+            chatModeId: request.chatModeId,
         }
 
         return this.apiService.post<number>(this.baseUrl, this.endpoint, messagePayload).pipe(
@@ -133,7 +141,7 @@ export class ChatMessageService {
                 const result = typeof messageId === 'number' ? messageId : 0
 
                 // Refresh messages for current session if applicable
-                if (message.chatSessionId === this.currentSessionIdSubject.value) {
+                if (request.message?.chatSessionId === this.currentSessionIdSubject.value) {
                     this.refreshCurrentSessionMessages()
                 }
                 return result
@@ -229,11 +237,17 @@ export class ChatMessageService {
     /**
      * Send a user message and optionally trigger AI response
      */
-    sendUserMessage(content: string, sessionId: number): Observable<number> {
-        const userMessage: Partial<ChatMessage> = {
-            chatSessionId: sessionId,
-            role: 'user',
-            content: content.trim()
+    sendUserMessage(content: string, sessionId: number, aiModelId?: number, chatModeId?: number): Observable<number> {
+        const userMessage: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: sessionId,
+                role: 'user',
+                content: content.trim(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            aiModelId: aiModelId,
+            chatModeId: chatModeId
         }
 
         return this.createMessage(userMessage)
@@ -242,11 +256,17 @@ export class ChatMessageService {
     /**
      * Add an AI assistant response
      */
-    addAssistantMessage(content: string, sessionId: number): Observable<number> {
-        const assistantMessage: Partial<ChatMessage> = {
-            chatSessionId: sessionId,
-            role: 'assistant',
-            content: content.trim()
+    addAssistantMessage(content: string, sessionId: number, aiModelId?: number, chatModeId?: number): Observable<number> {
+        const assistantMessage: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: sessionId,
+                role: 'assistant',
+                content: content.trim(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            aiModelId: aiModelId,
+            chatModeId: chatModeId
         }
 
         return this.createMessage(assistantMessage)
@@ -255,11 +275,17 @@ export class ChatMessageService {
     /**
      * Add a system message
      */
-    addSystemMessage(content: string, sessionId: number): Observable<number> {
-        const systemMessage: Partial<ChatMessage> = {
-            chatSessionId: sessionId,
-            role: 'system',
-            content: content.trim()
+    addSystemMessage(content: string, sessionId: number, aiModelId?: number, chatModeId?: number): Observable<number> {
+        const systemMessage: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: sessionId,
+                role: 'system',
+                content: content.trim(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            aiModelId: aiModelId,
+            chatModeId: chatModeId
         }
 
         return this.createMessage(systemMessage)
@@ -362,7 +388,6 @@ export class ChatMessageService {
      * Convert array of API ChatMessages to UI ChatMessageExtended array
      */
     private convertToExtendedMessages(messages: ChatMessage[]): ChatMessageExtended[] {
-        console.log('ChatMessageService - converting messages to extended format:', messages)
         return messages.map(message => this.convertToExtendedMessage(message))
     }
 

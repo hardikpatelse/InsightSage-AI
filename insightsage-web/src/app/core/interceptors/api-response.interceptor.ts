@@ -64,12 +64,6 @@ export class ApiResponseInterceptor implements HttpInterceptor {
     private handleStandardApiResponse(event: HttpResponse<any>, apiResponse: ApiResponse): HttpResponse<any> {
         if (isApiSuccess(apiResponse)) {
             // Success: return only the result data
-            console.log('API Success:', {
-                url: event.url,
-                status: apiResponse.status,
-                resultType: typeof apiResponse.result
-            })
-
             return event.clone({
                 body: apiResponse.result
             })

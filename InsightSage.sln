@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InsightSage.API.Chat.Test",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InsightSage.Shared.Middleware", "InsightSage.Shared.Middleware\InsightSage.Shared.Middleware.csproj", "{B1C64D24-E632-14F7-A77E-EBB5567D6895}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InsightSage.Shared.Tests", "InsightSage.Shared.Tests\InsightSage.Shared.Tests.csproj", "{67733F78-EE0B-4883-B39E-73EA93DA2BCC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -181,6 +183,18 @@ Global
 		{B1C64D24-E632-14F7-A77E-EBB5567D6895}.Release|x64.Build.0 = Release|Any CPU
 		{B1C64D24-E632-14F7-A77E-EBB5567D6895}.Release|x86.ActiveCfg = Release|Any CPU
 		{B1C64D24-E632-14F7-A77E-EBB5567D6895}.Release|x86.Build.0 = Release|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Debug|x64.Build.0 = Debug|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Debug|x86.Build.0 = Debug|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Release|x64.ActiveCfg = Release|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Release|x64.Build.0 = Release|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Release|x86.ActiveCfg = Release|Any CPU
+		{67733F78-EE0B-4883-B39E-73EA93DA2BCC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

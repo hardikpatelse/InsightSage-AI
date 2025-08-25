@@ -2,7 +2,8 @@ using InsightSage.Application.Services;
 using InsightSage.Data;
 using InsightSage.DataContext;
 using InsightSage.Infrastructure;
-using InsightSage.Shared.Middleware.Extensions;
+using InsightSage.Infrastructure.Extensions; // Add this using for the API connector
+using InsightSage.Shared.Middleware.Extensions; // Add this using for the ResponseStatusMiddleware
 using InsightSage.Shared.Interfaces.DataContexts;
 using InsightSage.Shared.Interfaces.Others;
 using InsightSage.Shared.Interfaces.Services;
@@ -157,6 +158,12 @@ builder.Services.AddScoped<IUserDataContext, UserDataContext>();
 
 #region Infrastructure Services
 builder.Services.AddScoped<IUserContext, UserContext>();
+// Add API Connector for 3rd party API calls
+builder.Services.AddApiConnector(client =>
+{
+    client.DefaultRequestHeaders.Add("User-Agent", "InsightSage-Auth-API/1.0");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 #endregion
 
 builder.Services.AddControllers();

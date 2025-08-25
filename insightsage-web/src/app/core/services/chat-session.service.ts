@@ -163,15 +163,12 @@ export class ChatSessionService {
    * Get all chat sessions for the current user
    */
   getUserSessions(): Observable<ChatSession[]> {
-    console.log('ChatSessionService - getUserSessions called')
     return this.apiService.get<ChatSession[]>(this.baseUrl, 'Session/user').pipe(
       map(sessions => {
-        console.log('ChatSessionService - getUserSessions response (unwrapped by interceptor):', sessions)
 
         // The interceptor automatically unwraps successful responses, so we get the array directly
         const sessionArray = Array.isArray(sessions) ? sessions : []
 
-        console.log('ChatSessionService - updating sessionsSubject with:', sessionArray)
         this.sessionsSubject.next(sessionArray)
         return sessionArray
       }),
@@ -246,11 +243,13 @@ export class ChatSessionService {
   /**
    * Create a new session with a default name
    */
-  createNewSession(name?: string): Observable<ChatSession> {
+  createNewSession(name?: string, defaultAIModelId?: number, defaultChatModeId?: number): Observable<ChatSession> {
     const sessionName = name || `Chat Session ${new Date().toLocaleString()}`
     const newSession: ChatSessionRequest = {
       name: sessionName,
-      id: 0
+      id: 0,
+      defaultAIModelId: defaultAIModelId,
+      defaultChatModeId: defaultChatModeId
     }
 
     return this.createSession(newSession).pipe(
