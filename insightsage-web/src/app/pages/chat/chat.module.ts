@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { ChatRoutingModule } from './chat-routing.module'
 import { Chat } from './chat'
 import { ChatHistoryModule } from '../../components/chat-history/chat-history.module'
+import { NewChatModalModule } from '../../components/new-chat-modal/new-chat-modal.module'
 
 // PrimeNG Imports
 import { ButtonModule } from 'primeng/button'
@@ -41,7 +42,8 @@ import { FluidModule } from 'primeng/fluid'
         ProgressBarModule,
         SkeletonModule,
         FluidModule,
-        ChatHistoryModule
+        ChatHistoryModule,
+        NewChatModalModule
     ]
 })
 export class ChatModule { }

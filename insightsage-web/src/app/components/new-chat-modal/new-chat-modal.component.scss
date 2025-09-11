@@ -1,0 +1,213 @@
+.new-chat-modal {
+    .p-dialog-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-600) 100%);
+        color: white;
+        border-radius: 12px 12px 0 0;
+
+        .p-dialog-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+    }
+
+    .p-dialog-content {
+        padding: 2rem;
+        background: var(--surface-0);
+    }
+
+    .new-chat-form {
+        .field {
+            margin-bottom: 1.5rem;
+
+            label {
+                display: flex;
+                align-items: center;
+                margin-bottom: 0.5rem;
+                font-size: 0.95rem;
+                color: var(--text-color);
+
+                i {
+                    color: var(--primary-color);
+                    font-size: 1rem;
+                }
+
+                .text-red-500 {
+                    color: var(--red-500);
+                    margin-left: 0.25rem;
+                }
+            }
+
+            .p-inputtext,
+            .p-dropdown {
+                border-radius: 8px;
+                border: 1px solid var(--surface-300);
+                transition: all 0.2s ease;
+
+                &:hover {
+                    border-color: var(--primary-300);
+                }
+
+                &:focus,
+                &.p-focus {
+                    border-color: var(--primary-color);
+                    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.2);
+                }
+
+                &.p-invalid {
+                    border-color: var(--red-500);
+
+                    &:focus {
+                        box-shadow: 0 0 0 0.2rem rgba(var(--red-500-rgb), 0.2);
+                    }
+                }
+            }
+
+            .p-error {
+                color: var(--red-500);
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
+            }
+        }
+
+        // Custom dropdown styling
+        .p-dropdown-panel {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+            .p-dropdown-items .p-dropdown-item {
+                padding: 0.75rem 1rem;
+                border-radius: 6px;
+                margin: 0.125rem 0.25rem;
+
+                &:hover {
+                    background-color: var(--primary-50);
+                    color: var(--primary-color);
+                }
+
+                &.p-highlight {
+                    background-color: var(--primary-color);
+                    color: white;
+                }
+            }
+        }
+
+        // Chip styling
+        .p-chip {
+            background-color: var(--surface-100);
+            color: var(--text-color);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+
+            &.text-xs {
+                font-size: 0.7rem;
+            }
+        }
+
+        // Button area styling
+        .border-top-1 {
+            border-top: 1px solid var(--surface-200);
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+
+        .p-button {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+
+            &:not(.p-button-outlined) {
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-600) 100%);
+                border: none;
+
+                &:hover {
+                    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+                }
+
+                &:disabled {
+                    background: var(--surface-300);
+                    color: var(--text-color-secondary);
+                }
+            }
+
+            &.p-button-outlined {
+                border: 1px solid var(--surface-300);
+                color: var(--text-color);
+
+                &:hover {
+                    background-color: var(--surface-100);
+                    border-color: var(--primary-color);
+                    color: var(--primary-color);
+                }
+            }
+        }
+    }
+}
+
+// Dark mode adjustments
+.app-dark {
+    .new-chat-modal {
+        .p-dialog-content {
+            background: var(--surface-900);
+        }
+
+        .new-chat-form {
+            .field {
+
+                .p-inputtext,
+                .p-dropdown {
+                    background-color: var(--surface-800);
+                    border-color: var(--surface-600);
+                    color: var(--text-color);
+
+                    &:hover {
+                        border-color: var(--primary-400);
+                    }
+
+                    &:focus,
+                    &.p-focus {
+                        border-color: var(--primary-color);
+                        box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.3);
+                    }
+                }
+            }
+
+            .p-chip {
+                background-color: var(--surface-700);
+                color: var(--text-color);
+            }
+
+            .border-top-1 {
+                border-color: var(--surface-600);
+            }
+        }
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 576px) {
+    .new-chat-modal {
+        width: 95vw !important;
+        max-width: 95vw !important;
+
+        .p-dialog-content {
+            padding: 1.5rem 1rem;
+        }
+
+        .new-chat-form {
+            .field {
+                margin-bottom: 1.25rem;
+            }
+
+            .flex.justify-content-end {
+                flex-direction: column;
+                gap: 0.75rem;
+
+                .p-button {
+                    width: 100%;
+                    justify-content: center;
+                }
+            }
+        }
+    }
+}

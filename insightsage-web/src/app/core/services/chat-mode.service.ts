@@ -1,12 +1,9 @@
 import { Injectable } from '@angular/core'
 import { Observable, BehaviorSubject, of } from 'rxjs'
-import { map, catchError, tap, switchMap } from 'rxjs/operators'
+import { map, catchError, switchMap } from 'rxjs/operators'
 import { ApiService } from './api.service'
 import { environment } from '../../../environments/environment'
 import { ChatMode, ChatModeSearchParams, ChatModeRequest } from '../entities/chat-mode'
-import { ChatModeResponse, ChatModesResponse } from '../entities/responses/chat-mode-response'
-import { AddUpdateEntityResponse } from '../entities/common/add-update-entity-response'
-import { DeleteEntityResponse } from '../entities/common/delete-entity-response'
 
 /**
  * Service for managing Chat Modes with comprehensive API integration

@@ -13,6 +13,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using InsightSage.Infrastructure.Examples;
+using InsightSage.Application.Services.AI;
+using InsightSage.Application.Services.SignalR;
+using InsightSage.Application.Services.SignalR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,6 +127,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 var token = context.Request.Headers["Authorization"].FirstOrDefault();
                 logger.LogDebug("Received token: {HasToken}", !string.IsNullOrEmpty(token));
+                
+                // Enable SignalR JWT authentication via query string
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    // Check if this is a SignalR request
+                    var path = context.HttpContext.Request.Path;
+                    if (path.StartsWithSegments("/api/chat-hub"))
+                    {
+                        context.Token = accessToken;
+                        logger.LogDebug("SignalR token extracted from query string");
+                    }
+                }
+                
                 return Task.CompletedTask;
             }
         };
@@ -176,6 +194,23 @@ builder.Services.AddApiConnector(client =>
 });
 #endregion
 
+#region SignalR Configuration
+builder.Services.AddSignalR();
+#endregion
+
+#region Background Services
+builder.Services.AddHostedService<AIProcessingService>();
+builder.Services.AddSingleton<AIProcessingService>();
+#endregion
+
+#region SignalR Services
+builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+#endregion
+
+#region Infrastructure Services
+builder.Services.AddScoped<MultiPlatformAIService>();
+#endregion
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -202,6 +237,9 @@ app.UseAuthorization();
 app.UseResponseStatusMiddleware();
 
 app.MapControllers();
+
+// Configure SignalR Hub
+app.MapHub<ChatHub>("/api/chat-hub");
 
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {

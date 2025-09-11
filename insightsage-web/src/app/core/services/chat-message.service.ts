@@ -3,10 +3,6 @@ import { Observable, BehaviorSubject, map, catchError, of, throwError } from 'rx
 import { ApiService } from './api.service'
 import { environment } from '../../../environments/environment'
 import { ChatMessage } from '../entities/chat-message'
-import { ChatMessageResponse } from '../entities/responses/chat-message-response'
-import { ChatMessagesResponse } from '../entities/responses/chat-messages-response'
-import { AddUpdateEntityResponse } from '../entities/common/add-update-entity-response'
-import { DeleteEntityResponse } from '../entities/common/delete-entity-response'
 import { ChatMessageExtended } from '../entities/custom/chat-message-extended'
 import { ChatMessageRequest } from '../entities/requests/chat-message-request'
 
@@ -19,7 +15,7 @@ import { ChatMessageRequest } from '../entities/requests/chat-message-request'
 })
 export class ChatMessageService {
     private readonly baseUrl = environment.chatApiBaseUrl
-    private readonly endpoint = 'Message'
+    private readonly endpoint = 'message'
 
     // State management for messages
     private messagesSubject = new BehaviorSubject<ChatMessageExtended[]>([])
@@ -289,6 +285,92 @@ export class ChatMessageService {
         }
 
         return this.createMessage(systemMessage)
+    }
+
+    /**
+     * Send message with AI processing - makes direct call to /message/with-ai endpoint
+     */
+    sendMessageWithAI(request: Partial<ChatMessageRequest>): Observable<number> {
+
+        this.loadingSubject.next(true)
+
+        if (!request.message) {
+            this.loadingSubject.next(false)
+            return throwError(() => new Error('Message is required'))
+        }
+
+        const messagePayload: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: request.message.chatSessionId,
+                role: request.message.role,
+                content: request.message.content
+            },
+            aiModelId: request.aiModelId,
+            chatModeId: request.chatModeId,
+            processWithAI: true,
+            platformSlug: request.platformSlug || 'openai',
+            model: request.model || 'gpt-3.5-turbo'
+        }
+
+        return this.apiService.post<number>(this.baseUrl, `${this.endpoint}/with-ai`, messagePayload)
+            .pipe(
+                map(messageId => {
+                    this.loadingSubject.next(false)
+
+                    // The interceptor automatically unwraps successful responses
+                    const result = typeof messageId === 'number' ? messageId : 0
+
+                    // Refresh messages for current session if applicable
+                    if (request.message?.chatSessionId === this.currentSessionIdSubject.value) {
+                        this.refreshCurrentSessionMessages()
+                    }
+                    return result
+                }),
+                catchError(error => {
+                    this.loadingSubject.next(false)
+                    console.error('Error sending message with AI:', error)
+                    console.error('Error details:', {
+                        status: error.status,
+                        statusText: error.statusText,
+                        message: error.message,
+                        error: error.error,
+                        name: error.name
+                    })
+                    return throwError(() => error)
+                })
+            )
+    }
+
+    /**
+     * Test API connectivity for the with-ai endpoint
+     */
+    testApiConnectivity(): Observable<any> {
+        const testPayload = {
+            message: {
+                role: 'user',
+                content: 'test message',
+                chatSessionId: 1
+            },
+            aiModelId: 2,
+            chatModeId: 1,
+            processWithAI: true,
+            platformSlug: 'openai',
+            model: 'gpt-3.5-turbo'
+        }
+
+        console.log('Testing API connectivity with payload:', testPayload)
+        console.log('Full API URL:', `${this.baseUrl}/${this.endpoint}/with-ai`)
+
+        return this.apiService.post<any>(this.baseUrl, `${this.endpoint}/with-ai`, testPayload).pipe(
+            map(response => {
+                console.log('Test API response:', response)
+                return response
+            }),
+            catchError(error => {
+                console.error('Test API error:', error)
+                return throwError(() => error)
+            })
+        )
     }
 
     /**

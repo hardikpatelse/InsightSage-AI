@@ -6,9 +6,12 @@ import { ChatMessageService } from '@/core/services/chat-message.service'
 import { ChatSessionService } from '@/core/services/chat-session.service'
 import { AIModelService } from '@/core/services/ai-model.service'
 import { ChatModeService } from '@/core/services/chat-mode.service'
+import { ChatHubService } from '@/core/services/signalr/chat-hub.service'
 import { Component, OnInit, OnDestroy } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
-import { Subject, takeUntil, switchMap, Observable, tap } from 'rxjs'
+import { Subject, takeUntil, switchMap, Observable, tap, firstValueFrom, catchError, of } from 'rxjs'
+import { HubConnectionState } from '@microsoft/signalr'
+import { ChatMessageRequest } from '@/core/entities/requests/chat-message-request'
 
 @Component({
   selector: 'app-chat',
@@ -25,6 +28,10 @@ export class Chat implements OnInit, OnDestroy {
   currentSessionId: number | null = null
   currentSessionUuid: string | null = null
 
+  // SignalR connection state
+  isSignalRConnected: boolean = false
+  isAITyping: boolean = false
+
   // Chat modes - will be loaded from service
   chatModes: ChatMode[] = []
   selectedChatMode: ChatMode | null = null
@@ -33,16 +40,23 @@ export class Chat implements OnInit, OnDestroy {
   aiModels: AIModel[] = []
   selectedAIModel: AIModel | null = null
 
+  // New Chat Modal properties
+  showNewChatDialog: boolean = false
+
   constructor(
     private chatMessageService: ChatMessageService,
     private chatSessionService: ChatSessionService,
     private aiModelService: AIModelService,
     private chatModeService: ChatModeService,
+    private chatHubService: ChatHubService,
     private route: ActivatedRoute,
     private router: Router
   ) { }
 
   ngOnInit() {
+    // Initialize SignalR connection
+    this.initializeSignalR()
+
     // Load chat modes and AI models
     this.loadChatModes()
     this.loadAIModels()
@@ -85,13 +99,123 @@ export class Chat implements OnInit, OnDestroy {
   }
 
   /**
+   * Initialize SignalR connection and event handlers
+   */
+  private async initializeSignalR() {
+    try {
+      // Connect to SignalR hub
+      await this.chatHubService.connect()
+
+      // Subscribe to connection state changes
+      this.chatHubService.connectionState$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(state => {
+          this.isSignalRConnected = state === HubConnectionState.Connected
+        })
+
+      // Subscribe to AI processing started events
+      this.chatHubService.aiProcessingStarted$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(event => {
+          if (event.sessionId === this.currentSessionId) {
+            this.isAITyping = true
+          }
+        })
+
+      // Subscribe to AI response received events
+      this.chatHubService.aiResponseReceived$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(event => {
+          if (event.sessionId === this.currentSessionId) {
+            this.isAITyping = false
+            // The message will be handled by the message service
+            // but we can show additional UI feedback here if needed
+            this.handleAIResponse(event)
+          }
+        })
+
+      // Subscribe to AI processing error events
+      this.chatHubService.aiProcessingError$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(event => {
+          console.error('AI processing error for session:', event.sessionId, event.error)
+          if (event.sessionId === this.currentSessionId) {
+            this.isAITyping = false
+            this.handleAIError(event)
+          }
+        })
+
+    } catch (error) {
+      console.error('Failed to initialize SignalR:', error)
+      this.isSignalRConnected = false
+    }
+  }
+
+  /**
+   * Handle AI response received event
+   */
+  private handleAIResponse(event: any) {
+    // Refresh messages to get the latest AI response
+    this.refreshMessages()
+
+    // You can add additional UI feedback here
+    console.log(`AI response received: ${event.content.substring(0, 100)}...`)
+    console.log(`Token usage: ${event.usage.totalTokens} total tokens`)
+  }
+
+  /**
+   * Handle AI processing error event
+   */
+  private handleAIError(event: any) {
+    // Show error message to user
+    console.error('AI processing failed:', event.error)
+
+    // You can add user notification here
+    // this.notificationService.showError(`AI processing failed: ${event.error}`)
+
+    // Refresh messages to ensure UI is in sync
+    this.refreshMessages()
+  }
+
+  /**
+   * Join SignalR session when session changes
+   */
+  private async joinSignalRSession(sessionId: number | string) {
+    if (this.chatHubService.isConnected) {
+      try {
+        await this.chatHubService.joinSession(sessionId)
+      } catch (error) {
+        console.error(`Failed to join SignalR session ${sessionId}:`, error)
+      }
+    }
+  }
+
+  /**
+   * Leave SignalR session
+   */
+  private async leaveSignalRSession(sessionId: number | string) {
+    if (this.chatHubService.isConnected) {
+      try {
+        await this.chatHubService.leaveSession(sessionId)
+      } catch (error) {
+        console.error(`Failed to leave SignalR session ${sessionId}:`, error)
+      }
+    }
+  }
+
+  /**
    * Load session by UUID from route parameter
    */
   private loadSessionByUuid(uuid: string) {
     this.chatSessionService.getSessionByUniqueId(uuid)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (session) => {
+        next: async (session) => {
+          // Leave previous session if exists
+          if (this.currentSessionId && this.currentSessionId !== session.id) {
+            await this.leaveSignalRSession(this.currentSessionId)
+          }
+
           this.currentSessionId = session.id || null
           this.currentSessionUuid = session.uniqueIdentity
           if (session.aiModel) {
@@ -100,7 +224,13 @@ export class Chat implements OnInit, OnDestroy {
           if (session.chatMode) {
             this.selectedChatMode = session.chatMode
           }
+
           this.loadSessionMessages()
+
+          // Join the new session in SignalR
+          if (this.currentSessionId) {
+            await this.joinSignalRSession(this.currentSessionId)
+          }
         },
         error: (error) => {
           console.error('Failed to load session by UUID:', error)
@@ -278,29 +408,59 @@ export class Chat implements OnInit, OnDestroy {
    * Send a message from the user
    */
   sendMessage() {
-    if (!this.newMessage.trim() || this.isLoading) return
+    console.log('Send message called')
+    if (!this.newMessage.trim() || this.isLoading) {
+      console.log('Send message called but input is empty or loading')
+      return
+    }
 
     const messageContent = this.newMessage.trim()
-    this.newMessage = ''
+    this.newMessage = '' // Clear input immediately for better UX
 
-    // Get current selected AI model and chat mode IDs
-    const aiModelId = this.selectedAIModel?.id ?? undefined
-    const chatModeId = this.selectedChatMode?.id ?? undefined
+    try {
+      // If no current session exists, create one first
+      // if (!this.currentSessionId) {
+      //   const sessionName = `Chat Session ${new Date().toLocaleString()}`
+      //   const newSession = await firstValueFrom(this.createNewChatSession(sessionName))
 
-    // Send user message via service
-    this.chatMessageService.sendUserMessage(
-      messageContent,
-      this.currentSessionId ?? 0,
-      aiModelId,
-      chatModeId
-    )
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
+      //   // Wait a moment for navigation and session setup
+      //   await new Promise(resolve => setTimeout(resolve, 500))
+
+      //   if (!this.currentSessionId) {
+      //     console.error('Failed to create session for message sending')
+      //     return
+      //   }
+      // }
+
+      const messagePayload: Partial<ChatMessageRequest> = {
+        message: {
+          chatSessionId: this.currentSessionId ? this.currentSessionId : 0,
+          role: 'user',
+          content: messageContent
+        },
+        aiModelId: this.selectedAIModel?.id,
+        chatModeId: this.selectedChatMode?.id,
+        processWithAI: true,
+        platformSlug: 'openai',
+        model: this.selectedAIModel?.value || 'gpt-3.5-turbo'
+      }
+
+      // Send message with AI processing
+      this.chatMessageService.sendMessageWithAI(messagePayload).subscribe({
+        next: () => {
+          this.isLoading = false
+        },
         error: (error) => {
-          console.error('Failed to send message:', error)
-          this.newMessage = messageContent // Restore message if failed
+          console.error('Failed to send message with AI:', error)
+          this.isLoading = false
+          return of(null)
         }
       })
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      // Restore message if sending failed
+      this.newMessage = messageContent
+    }
   }
 
   /**
@@ -398,5 +558,44 @@ export class Chat implements OnInit, OnDestroy {
    */
   clearMessages() {
     this.chatMessageService.clearCurrentSessionMessages()
+  }
+
+  /**
+   * Show the new chat modal dialog
+   */
+  showNewChatModal(): void {
+    this.showNewChatDialog = true
+  }
+
+  /**
+   * Handle creating new chat session from modal
+   */
+  onCreateNewChatSession(sessionRequest: any): void {
+    this.isLoading = true
+
+    this.chatSessionService.createNewSession(
+      sessionRequest.sessionName,
+      sessionRequest.aiModelId,
+      sessionRequest.chatModeId
+    ).subscribe({
+      next: (newSession) => {
+        this.isLoading = false
+        this.showNewChatDialog = false
+        // Navigate to the new session
+        this.router.navigate(['/chat', newSession.uniqueIdentity])
+      },
+      error: (error) => {
+        console.error('Failed to create new chat session:', error)
+        this.isLoading = false
+        // Keep modal open to allow retry
+      }
+    })
+  }
+
+  /**
+   * Handle closing new chat modal
+   */
+  onNewChatModalClose(): void {
+    this.showNewChatDialog = false
   }
 }

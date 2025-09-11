@@ -252,45 +252,52 @@ export class UserService {
         prompt: 'select_account'
       }
 
+      console.log('MSAL popup login starting with request:', popupRequest)
+
       this.msalService.loginPopup(popupRequest).subscribe({
         next: (result) => {
+          console.log('MSAL popup login result:', result)
           if (result.account) {
             // Set the account as active
             this.msalService.instance.setActiveAccount(result.account)
             const user = this.mapAccountToUser(result.account)
-            // Try to sync enriched user profile with backend after successful login
+            console.log('Mapped user from account:', user)
+
+            // Set the user immediately to avoid hanging
+            this.currentUserSubject.next(user)
+
+            // Try to sync with backend but don't wait for it to complete the login
+            console.log('Starting background sync with backend...')
             this.syncUserProfileWithBackendCached(true).subscribe({
               next: (backendUser) => {
+                console.log('Backend user sync result:', backendUser)
                 if (backendUser) {
-                  this.notificationService.showSuccess(`Welcome back, ${backendUser.name}!`, 'Login Successful')
-                  // Update user with backend data (including user ID)
+                  console.log('Updating user with backend data')
+                  // Update user with backend data (including user ID) after login completes
                   this.currentUserSubject.next(backendUser)
-                  observer.next(backendUser)
-                  observer.complete()
+                  this.notificationService.showSuccess(`Welcome back, ${backendUser.name}!`, 'Login Successful')
                 } else {
-                  console.warn('Failed to sync user profile with backend, using local user data')
-                  this.notificationService.showWarning('Login successful, but user data sync failed.', 'Partial Success')
-                  this.currentUserSubject.next(user)
-                  observer.next(user)
-                  observer.complete()
+                  console.warn('Backend sync returned null, keeping local user data')
                 }
               },
               error: (syncError) => {
-                console.warn('Failed to sync user profile with backend:', syncError)
-                this.notificationService.showWarning('Login successful, but user data sync failed.', 'Partial Success')
-                // Fall back to local user data if sync fails
-                this.currentUserSubject.next(user)
-                observer.next(user)
-                observer.complete()
+                console.warn('Background backend sync failed:', syncError)
+                // User is already logged in with local data, so this is not critical
               }
             })
+
+            // Complete login immediately with local user data
+            console.log('Completing login with local user data')
+            observer.next(user)
+            observer.complete()
           } else {
+            console.warn('No account in MSAL popup result')
             observer.next(null)
             observer.complete()
           }
         },
         error: (error) => {
-          console.error('Login failed:', error)
+          console.error('MSAL popup login failed:', error)
           observer.error(error)
         }
       })
@@ -451,11 +458,14 @@ export class UserService {
    * This method ensures both MSAL authentication and backend sync are valid
    */
   validateUserAuthentication(): Observable<boolean> {
+    console.log('UserService: Starting authentication validation')
     return from(this.initializationPromise).pipe(
       switchMap(() => {
         // First check MSAL authentication
         const account = this.msalService.instance.getActiveAccount()
+        console.log('UserService: Active MSAL account:', account)
         if (!account) {
+          console.log('UserService: No active MSAL account found')
           return of(false)
         }
 
@@ -463,6 +473,7 @@ export class UserService {
         return this.getCurrentUser().pipe(
           map(user => {
             const isValid = !!user
+            console.log('UserService: User validation result - User:', user, 'Valid:', isValid)
             return isValid
           }),
           catchError(error => {

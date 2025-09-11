@@ -56,12 +56,16 @@ export class AuthInterceptor implements HttpInterceptor {
                 return next.handle(authRequest)
             }),
             catchError(error => {
-                console.error('Failed to acquire token for backend API:', request.url, error)
-                console.error('Error details:', error.message || error)
-                console.error('Account info:', account?.username || 'No account')
-                console.error('Requested scopes:', scopes)
-                // Proceed without auth header for backend APIs
-                console.warn('Proceeding without auth header due to token acquisition failure')
+                console.error('Failed to acquire token for backend API:', {
+                    url: request.url,
+                    error: error,
+                    errorMessage: error.message || error,
+                    errorCode: error.errorCode,
+                    errorDesc: error.errorDesc,
+                    account: account?.username || 'No account',
+                    requestedScopes: scopes,
+                    timestamp: new Date().toISOString()
+                })
                 return next.handle(request)
             })
         )

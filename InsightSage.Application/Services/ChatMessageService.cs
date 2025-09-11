@@ -1,3 +1,4 @@
+using InsightSage.Shared.Exceptions;
 using InsightSage.Shared.Interfaces.DataContexts;
 using InsightSage.Shared.Interfaces.Others;
 using InsightSage.Shared.Interfaces.Services;
@@ -5,7 +6,6 @@ using InsightSage.Shared.Interfaces.Services.Common;
 using InsightSage.Shared.Models.Entities;
 using InsightSage.Shared.Models.Responses;
 using InsightSage.Shared.Models.Responses.Common;
-using InsightSage.Shared.Exceptions;
 using System.Net;
 
 namespace InsightSage.Application.Services
@@ -62,64 +62,6 @@ namespace InsightSage.Application.Services
                     {
                         Status = HttpStatusCode.BadRequest,
                         Errors = new List<string> { "Message content is required" }
-                    };
-                }
-
-                // Handle default session logic when ChatSessionId is 0
-                if (data.ChatSessionId <= 0)
-                {
-                    const string defaultSessionName = "Default Session";
-                    
-                    // Check if Default Session exists
-                    var defaultSessionResponse = await _chatSessionService.GetByUserIdAndExactNameAsync(defaultSessionName);
-                    
-                    if (defaultSessionResponse.Result != null)
-                    {
-                        // Use existing default session
-                        data.ChatSessionId = defaultSessionResponse.Result.Id;
-                        
-                        // Validate and update session with provided AI model and chat mode if needed
-                        var session = defaultSessionResponse.Result;
-                        bool sessionNeedsUpdate = false;
-                        
-                        // If AI Model is provided and different from session, update session
-                        if (data.ChatSessionId > 0 && session.Id != data.ChatSessionId)
-                        {
-                            // Validate AI Model if provided - This seems wrong, let me fix the logic
-                        }
-                    }
-                    else
-                    {
-                        // Create new default session with AI model and chat mode
-                        var newDefaultSession = new ChatSession
-                        {
-                            Name = defaultSessionName,
-                            UserId = _userContext.UserId, // UserId will throw exception if not authenticated
-                            UniqueIdentity = Guid.NewGuid()
-                        };
-
-                        var createSessionResponse = await _chatSessionService.AddUpdateAsync(newDefaultSession);
-                        
-                        if (createSessionResponse.Result > 0)
-                        {
-                            data.ChatSessionId = createSessionResponse.Result;
-                        }
-                        else
-                        {
-                            return new AddUpdateEntityResponse
-                            {
-                                Status = HttpStatusCode.InternalServerError,
-                                Errors = new List<string> { "Failed to create default session" }
-                            };
-                        }
-                    }
-                } 
-                else if (data.ChatSessionId <= 0)
-                {
-                    return new AddUpdateEntityResponse
-                    {
-                        Status = HttpStatusCode.BadRequest,
-                        Errors = new List<string> { "Valid chat session is required" }
                     };
                 }
 
@@ -284,112 +226,10 @@ namespace InsightSage.Application.Services
                     };
                 }
                 #endregion
-                // Handle session logic
-                if (data.ChatSessionId <= 0)
-                {
-                    const string defaultSessionName = "Default Session";
-                    
-                    // Check if Default Session exists
-                    var defaultSessionResponse = await _chatSessionService.GetByUserIdAndExactNameAsync(defaultSessionName);
-                    
-                    if (defaultSessionResponse.Result != null)
-                    {
-                        var session = defaultSessionResponse.Result;
-                        bool sessionNeedsUpdate = false;
+                
+                var chatSession = await CreateSessionIfNotValid(data, aiModelId, chatModeId);
 
-                        // Update session with AI model if provided and different
-                        if (aiModelId.HasValue && session.AIModelId != aiModelId.Value)
-                        {
-                            session.AIModelId = aiModelId.Value;
-                            sessionNeedsUpdate = true;
-                        }
-
-                        // Update session with chat mode if provided and different
-                        if (chatModeId.HasValue && session.ChatModeId != chatModeId.Value)
-                        {
-                            session.ChatModeId = chatModeId.Value;
-                            sessionNeedsUpdate = true;
-                        }
-
-                        // Update session if needed
-                        if (sessionNeedsUpdate)
-                        {
-                            await _chatSessionService.AddUpdateAsync(session);
-                        }
-
-                        data.ChatSessionId = session.Id;
-                    }
-                    else
-                    {
-                        // Create new default session with AI model and chat mode
-                        var newDefaultSession = new ChatSession
-                        {
-                            Name = defaultSessionName,
-                            UserId = _userContext.UserId,
-                            UniqueIdentity = Guid.NewGuid(),
-                            AIModelId = aiModelId,
-                            ChatModeId = chatModeId
-                        };
-
-                        var createSessionResponse = await _chatSessionService.AddUpdateAsync(newDefaultSession);
-                        
-                        if (createSessionResponse.Result > 0)
-                        {
-                            data.ChatSessionId = createSessionResponse.Result;
-                        }
-                        else
-                        {
-                            return new AddUpdateEntityResponse
-                            {
-                                Status = HttpStatusCode.InternalServerError,
-                                Errors = new List<string> { "Failed to create default session" }
-                            };
-                        }
-                    }
-                }
-                else
-                {
-                    // Validate existing session
-                    var sessionResponse = await _chatSessionService.GetByIdAsync(data.ChatSessionId.Value);
-                    if (sessionResponse.Result == null)
-                    {
-                        return new AddUpdateEntityResponse
-                        {
-                            Status = HttpStatusCode.NotFound,
-                            Errors = new List<string> { "Chat session not found" }
-                        };
-                    }
-
-                    if (sessionResponse.Result.UserId != _userContext.UserId)
-                    {
-                        return new AddUpdateEntityResponse
-                        {
-                            Status = HttpStatusCode.Forbidden,
-                            Errors = new List<string> { "You don't have permission to add messages to this session" }
-                        };
-                    }
-
-                    // Update session with AI model and chat mode if provided
-                    var session = sessionResponse.Result;
-                    bool sessionNeedsUpdate = false;
-
-                    if (aiModelId.HasValue && session.AIModelId != aiModelId.Value)
-                    {
-                        session.AIModelId = aiModelId.Value;
-                        sessionNeedsUpdate = true;
-                    }
-
-                    if (chatModeId.HasValue && session.ChatModeId != chatModeId.Value)
-                    {
-                        session.ChatModeId = chatModeId.Value;
-                        sessionNeedsUpdate = true;
-                    }
-
-                    if (sessionNeedsUpdate)
-                    {
-                        await _chatSessionService.AddUpdateAsync(session);
-                    }
-                }
+                data.ChatSessionId = chatSession.Id;
 
                 // Add the message
                 var id = await _chatMessageDataContext.AddAsync(data);
@@ -529,6 +369,112 @@ namespace InsightSage.Application.Services
                     Errors = new List<string> { ex.Message }
                 };
             }
+        }
+
+        private async Task<ChatSession> CreateSessionIfNotValid(ChatMessage message, int? aiModelId = null, int? chatModeId = null)
+        {
+            var validSession = new ChatSession();
+            // Handle default session logic when ChatSessionId is 0
+            // Handle session logic
+            if (message.ChatSessionId <= 0)
+            {
+                const string defaultSessionName = "Default Session";
+
+                // Check if Default Session exists
+                var defaultSessionResponse = await _chatSessionService.GetByUserIdAndExactNameAsync(defaultSessionName);
+
+                if (defaultSessionResponse.Result != null)
+                {
+                    var session = defaultSessionResponse.Result;
+                    bool sessionNeedsUpdate = false;
+
+                    // Update session with AI model if provided and different
+                    if (aiModelId.HasValue && session.AIModelId != aiModelId.Value)
+                    {
+                        session.AIModelId = aiModelId.Value;
+                        sessionNeedsUpdate = true;
+                    }
+
+                    // Update session with chat mode if provided and different
+                    if (chatModeId.HasValue && session.ChatModeId != chatModeId.Value)
+                    {
+                        session.ChatModeId = chatModeId.Value;
+                        sessionNeedsUpdate = true;
+                    }
+
+                    // Update session if needed
+                    if (sessionNeedsUpdate)
+                    {
+                        await _chatSessionService.AddUpdateAsync(session);
+                    }
+
+                    message.ChatSessionId = session.Id;
+                    validSession = session;
+                }
+                else
+                {
+                    // Create new default session with AI model and chat mode
+                    var newDefaultSession = new ChatSession
+                    {
+                        Name = defaultSessionName,
+                        UserId = _userContext.UserId,
+                        UniqueIdentity = Guid.NewGuid(),
+                        AIModelId = aiModelId,
+                        ChatModeId = chatModeId
+                    };
+
+                    var createSessionResponse = await _chatSessionService.AddUpdateAsync(newDefaultSession);
+
+                    if (createSessionResponse.Result > 0)
+                    {
+                        message.ChatSessionId = createSessionResponse.Result;
+                        validSession = newDefaultSession;
+                        validSession.Id = createSessionResponse.Result;
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to create default session");
+                    }
+                }
+            }
+            else
+            {
+                // Validate existing session
+                var sessionResponse = await _chatSessionService.GetByIdAsync(message.ChatSessionId.Value);
+                if (sessionResponse.Result == null)
+                {
+                    throw new Exception("Chat session not found");
+                }
+
+                if (sessionResponse.Result.UserId != _userContext.UserId)
+                {
+                    throw new Exception("You don't have permission to add messages to this session");
+                }
+
+                // Update session with AI model and chat mode if provided
+                var session = sessionResponse.Result;
+                bool sessionNeedsUpdate = false;
+
+                if (aiModelId.HasValue && session.AIModelId != aiModelId.Value)
+                {
+                    session.AIModelId = aiModelId.Value;
+                    sessionNeedsUpdate = true;
+                }
+
+                if (chatModeId.HasValue && session.ChatModeId != chatModeId.Value)
+                {
+                    session.ChatModeId = chatModeId.Value;
+                    sessionNeedsUpdate = true;
+                }
+
+                if (sessionNeedsUpdate)
+                {
+                    await _chatSessionService.AddUpdateAsync(session);
+                    validSession = session;
+                }
+            }
+
+            return validSession;
         }
     }
 }

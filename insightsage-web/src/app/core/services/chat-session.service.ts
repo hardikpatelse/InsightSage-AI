@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core'
 import { Observable, BehaviorSubject, of } from 'rxjs'
-import { map, catchError, tap, switchMap } from 'rxjs/operators'
+import { map, catchError, switchMap } from 'rxjs/operators'
 import { ApiService } from './api.service'
 import { environment } from '../../../environments/environment'
 import { ChatSession, ChatSessionSearchParams } from '../entities/chat-session'
-import { ChatSessionListResponse } from '../entities/responses/chat-sessions-response'
-import { AddUpdateEntityResponse } from '../entities/common/add-update-entity-response'
-import { ChatSessionResponse } from '../entities/responses/chat-session-response'
-import { DeleteEntityResponse } from '../entities/common/delete-entity-response'
-import { isApiSuccess } from '../entities/responses/api-response'
 import { ChatSessionRequest } from '../entities/requests/chat-session-request'
 
 @Injectable({
