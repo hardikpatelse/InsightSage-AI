@@ -1,6 +1,10 @@
+using InsightSage.Application.Services;
+using InsightSage.Application.Services.AI;
 using InsightSage.Shared.Interfaces.Others;
 using InsightSage.Shared.Interfaces.Services;
+using InsightSage.Shared.Models.Custom;
 using InsightSage.Shared.Models.Entities;
+using InsightSage.Shared.Models.Requests;
 using InsightSage.Shared.Models.Responses;
 using InsightSage.Shared.Models.Responses.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -106,51 +110,89 @@ namespace InsightSage.API.Chat.Controllers
         }
 
         /// <summary>
-        /// Create a new chat message
+        /// Create a new chat message with optional AI model and chat mode configuration
         /// </summary>
-        [HttpPost]
-        public async Task<AddUpdateEntityResponse> CreateMessage([FromBody] ChatMessage message)
+        //[HttpPost]
+        //public async Task<AddUpdateEntityResponse> CreateMessage([FromBody] MessageWithConfigRequest request)
+        //{
+        //    var result = new AddUpdateEntityResponse();
+        //    try
+        //    {
+        //        // Cast to ChatMessageService to access the new method with configuration
+        //        if (_chatMessageService is ChatMessageService concreteService)
+        //        {
+        //            result = await concreteService.CreateMessageWithConfigurationAsync(
+        //                request.Message, 
+        //                request.AIModelId, 
+        //                request.ChatModeId);
+        //        }
+        //        else
+        //        {
+        //            // Fallback to regular method if concrete service is not available
+        //            result = await _chatMessageService.AddUpdateAsync(request.Message);
+        //        }
+
+        //        // If session configuration was provided and message creation was successful,
+        //        // update session configuration in background task (non-blocking)
+        //        if (result.Status == HttpStatusCode.OK && result.Result > 0 && 
+        //            (request.AIModelId.HasValue || request.ChatModeId.HasValue) &&
+        //            request.Message.ChatSessionId.HasValue && request.Message.ChatSessionId > 0)
+        //        {
+        //            // Fire-and-forget background task to update session configuration
+        //            _ = Task.Run(async () =>
+        //            {
+        //                try
+        //                {
+        //                    await UpdateSessionConfigurationAsync(
+        //                        request.Message.ChatSessionId.Value, 
+        //                        request.AIModelId, 
+        //                        request.ChatModeId);
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    // Log the error but don't affect the main response
+        //                    System.Diagnostics.Debug.WriteLine($"Background session update failed: {ex.Message}");
+        //                }
+        //            });
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        result.Status = HttpStatusCode.InternalServerError;
+        //        result.Errors.Add(ex.GetBaseException().Message);
+        //        result.ExceptionDetails = ex.ToString();
+        //    }
+        //    return result;
+        //}
+
+        /// <summary>
+        /// Background helper method to update session configuration
+        /// </summary>
+        /// <param name="sessionId">Session ID to update</param>
+        /// <param name="aiModelId">AI model ID to set (optional)</param>
+        /// <param name="chatModeId">Chat mode ID to set (optional)</param>
+        /// <returns>Task for background execution</returns>
+        private async Task UpdateSessionConfigurationAsync(int sessionId, int? aiModelId, int? chatModeId)
         {
-            var result = new AddUpdateEntityResponse();
             try
             {
-                if (message == null)
+                // Get session service from HTTP context if available
+                var sessionService = HttpContext.RequestServices
+                    .GetService<IChatSessionService<ChatSessionResponse<List<ChatSession>>, ChatSessionResponse<ChatSession>, ChatSession>>();
+
+                if (sessionService is ChatSessionService concreteSessionService)
                 {
-                    result.Status = HttpStatusCode.BadRequest;
-                    result.Errors.Add("Message data is required");
-                    return result;
+                    await concreteSessionService.UpdateSessionConfigurationAsync(
+                        sessionId, 
+                        aiModelId, 
+                        chatModeId);
                 }
-
-                if (string.IsNullOrWhiteSpace(message.Role))
-                {
-                    result.Status = HttpStatusCode.BadRequest;
-                    result.Errors.Add("Message role is required");
-                    return result;
-                }
-
-                if (string.IsNullOrWhiteSpace(message.Content))
-                {
-                    result.Status = HttpStatusCode.BadRequest;
-                    result.Errors.Add("Message content is required");
-                    return result;
-                }
-
-                //if (message.ChatSessionId <= 0)
-                //{
-                //    result.Status = HttpStatusCode.BadRequest;
-                //    result.Errors.Add("Valid chat session ID is required");
-                //    return result;
-                //}
-
-                result = await _chatMessageService.AddUpdateAsync(message);
             }
             catch (Exception ex)
             {
-                result.Status = HttpStatusCode.InternalServerError;
-                result.Errors.Add(ex.GetBaseException().Message);
-                result.ExceptionDetails = ex.ToString();
+                // Log error but don't propagate - this is a background operation
+                System.Diagnostics.Debug.WriteLine($"Session configuration update failed for session {sessionId}: {ex.Message}");
             }
-            return result;
         }
 
         /// <summary>
@@ -346,6 +388,83 @@ namespace InsightSage.API.Chat.Controllers
                     message = ex.Message,
                     stackTrace = ex.StackTrace
                 });
+            }
+        }
+
+        /// <summary>
+        /// Create a new chat message with AI processing
+        /// </summary>
+        [HttpPost("with-ai")]
+        public async Task<AddUpdateEntityResponse> CreateMessageWithAI([FromBody] MessageWithAIRequest request)
+        {
+            var result = new AddUpdateEntityResponse();
+            try
+            {
+                if (request?.Message == null)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Message data is required");
+                    return result;
+                }
+
+                if (string.IsNullOrWhiteSpace(request.Message.Role))
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Message role is required");
+                    return result;
+                }
+
+                if (string.IsNullOrWhiteSpace(request.Message.Content))
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Message content is required");
+                    return result;
+                }
+
+                // Save user message first
+                if (request.Message.ChatSessionId == null || request.Message.ChatSessionId <= 0)
+                {
+                    result = await _chatMessageService.CreateMessageWithConfigurationAsync(
+                        request.Message, 
+                        request.AIModelId, 
+                        request.ChatModeId);
+                }
+                else
+                {
+                    result = await _chatMessageService.AddUpdateAsync(request.Message);
+                }
+
+                // If message was saved successfully and AI processing is requested
+                if (result.Result > 0 && request.ProcessWithAI)
+                {
+                    // Get AI processing service and queue the request
+                    var aiProcessingService = HttpContext.RequestServices.GetService<AIProcessingService>();
+                    if (aiProcessingService != null)
+                    {
+                        var aiRequest = new AIProcessingRequest
+                        {
+                            SessionId = request.Message.ChatSessionId ?? 0,
+                            UserMessageId = result.Result,
+                            UserId = _userContext.UserId,
+                            UserMessage = request.Message.Content,
+                            PlatformSlug = request.PlatformSlug,
+                            Model = request.Model,
+                            MaxTokens = request.MaxTokens,
+                            Temperature = request.Temperature
+                        };
+
+                        aiProcessingService.QueueProcessing(aiRequest);
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.Status = HttpStatusCode.InternalServerError;
+                result.Errors.Add(ex.GetBaseException().Message);
+                result.ExceptionDetails = ex.ToString();
+                return result;
             }
         }
     }

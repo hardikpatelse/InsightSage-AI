@@ -3,11 +3,8 @@ import { Observable, BehaviorSubject, map, catchError, of, throwError } from 'rx
 import { ApiService } from './api.service'
 import { environment } from '../../../environments/environment'
 import { ChatMessage } from '../entities/chat-message'
-import { ChatMessageResponse } from '../entities/responses/chat-message-response'
-import { ChatMessagesResponse } from '../entities/responses/chat-messages-response'
-import { AddUpdateEntityResponse } from '../entities/common/add-update-entity-response'
-import { DeleteEntityResponse } from '../entities/common/delete-entity-response'
 import { ChatMessageExtended } from '../entities/custom/chat-message-extended'
+import { ChatMessageRequest } from '../entities/requests/chat-message-request'
 
 /**
  * Service for managing chat messages with comprehensive API integration
@@ -18,7 +15,7 @@ import { ChatMessageExtended } from '../entities/custom/chat-message-extended'
 })
 export class ChatMessageService {
     private readonly baseUrl = environment.chatApiBaseUrl
-    private readonly endpoint = 'Message'
+    private readonly endpoint = 'message'
 
     // State management for messages
     private messagesSubject = new BehaviorSubject<ChatMessageExtended[]>([])
@@ -90,12 +87,10 @@ export class ChatMessageService {
         return this.apiService.get<ChatMessage[]>(this.baseUrl, `${this.endpoint}/session/${sessionId}`).pipe(
             map(messages => {
                 this.loadingSubject.next(false)
-                console.log('ChatMessageService - getMessagesBySessionId response (unwrapped by interceptor):', messages)
 
                 // The interceptor automatically unwraps successful responses, so we get the array directly
                 const messageArray = Array.isArray(messages) ? messages : []
 
-                console.log('ChatMessageService - extracted messages:', messageArray)
                 const uiMessages = this.convertToExtendedMessages(messageArray)
                 this.messagesSubject.next(uiMessages)
                 this.currentSessionIdSubject.next(sessionId)
@@ -114,15 +109,24 @@ export class ChatMessageService {
      * POST /api/Message
      * Create a new chat message
      */
-    createMessage(message: Partial<ChatMessage>): Observable<number> {
+    createMessage(request: Partial<ChatMessageRequest>): Observable<number> {
         this.loadingSubject.next(true)
 
-        const messagePayload: Partial<ChatMessage> = {
-            chatSessionId: message.chatSessionId,
-            role: message.role,
-            content: message.content,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+        if (!request.message) {
+            this.loadingSubject.next(false)
+            return throwError(() => new Error('Message is required'))
+        }
+
+        const messagePayload: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: request.message.chatSessionId,
+                role: request.message.role,
+                content: request.message.content,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            aiModelId: request.aiModelId,
+            chatModeId: request.chatModeId,
         }
 
         return this.apiService.post<number>(this.baseUrl, this.endpoint, messagePayload).pipe(
@@ -133,7 +137,7 @@ export class ChatMessageService {
                 const result = typeof messageId === 'number' ? messageId : 0
 
                 // Refresh messages for current session if applicable
-                if (message.chatSessionId === this.currentSessionIdSubject.value) {
+                if (request.message?.chatSessionId === this.currentSessionIdSubject.value) {
                     this.refreshCurrentSessionMessages()
                 }
                 return result
@@ -229,11 +233,17 @@ export class ChatMessageService {
     /**
      * Send a user message and optionally trigger AI response
      */
-    sendUserMessage(content: string, sessionId: number): Observable<number> {
-        const userMessage: Partial<ChatMessage> = {
-            chatSessionId: sessionId,
-            role: 'user',
-            content: content.trim()
+    sendUserMessage(content: string, sessionId: number, aiModelId?: number, chatModeId?: number): Observable<number> {
+        const userMessage: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: sessionId,
+                role: 'user',
+                content: content.trim(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            aiModelId: aiModelId,
+            chatModeId: chatModeId
         }
 
         return this.createMessage(userMessage)
@@ -242,11 +252,17 @@ export class ChatMessageService {
     /**
      * Add an AI assistant response
      */
-    addAssistantMessage(content: string, sessionId: number): Observable<number> {
-        const assistantMessage: Partial<ChatMessage> = {
-            chatSessionId: sessionId,
-            role: 'assistant',
-            content: content.trim()
+    addAssistantMessage(content: string, sessionId: number, aiModelId?: number, chatModeId?: number): Observable<number> {
+        const assistantMessage: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: sessionId,
+                role: 'assistant',
+                content: content.trim(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            aiModelId: aiModelId,
+            chatModeId: chatModeId
         }
 
         return this.createMessage(assistantMessage)
@@ -255,14 +271,106 @@ export class ChatMessageService {
     /**
      * Add a system message
      */
-    addSystemMessage(content: string, sessionId: number): Observable<number> {
-        const systemMessage: Partial<ChatMessage> = {
-            chatSessionId: sessionId,
-            role: 'system',
-            content: content.trim()
+    addSystemMessage(content: string, sessionId: number, aiModelId?: number, chatModeId?: number): Observable<number> {
+        const systemMessage: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: sessionId,
+                role: 'system',
+                content: content.trim(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            aiModelId: aiModelId,
+            chatModeId: chatModeId
         }
 
         return this.createMessage(systemMessage)
+    }
+
+    /**
+     * Send message with AI processing - makes direct call to /message/with-ai endpoint
+     */
+    sendMessageWithAI(request: Partial<ChatMessageRequest>): Observable<number> {
+
+        this.loadingSubject.next(true)
+
+        if (!request.message) {
+            this.loadingSubject.next(false)
+            return throwError(() => new Error('Message is required'))
+        }
+
+        const messagePayload: Partial<ChatMessageRequest> = {
+            message: {
+                chatSessionId: request.message.chatSessionId,
+                role: request.message.role,
+                content: request.message.content
+            },
+            aiModelId: request.aiModelId,
+            chatModeId: request.chatModeId,
+            processWithAI: true,
+            platformSlug: request.platformSlug || 'openai',
+            model: request.model || 'gpt-3.5-turbo'
+        }
+
+        return this.apiService.post<number>(this.baseUrl, `${this.endpoint}/with-ai`, messagePayload)
+            .pipe(
+                map(messageId => {
+                    this.loadingSubject.next(false)
+
+                    // The interceptor automatically unwraps successful responses
+                    const result = typeof messageId === 'number' ? messageId : 0
+
+                    // Refresh messages for current session if applicable
+                    if (request.message?.chatSessionId === this.currentSessionIdSubject.value) {
+                        this.refreshCurrentSessionMessages()
+                    }
+                    return result
+                }),
+                catchError(error => {
+                    this.loadingSubject.next(false)
+                    console.error('Error sending message with AI:', error)
+                    console.error('Error details:', {
+                        status: error.status,
+                        statusText: error.statusText,
+                        message: error.message,
+                        error: error.error,
+                        name: error.name
+                    })
+                    return throwError(() => error)
+                })
+            )
+    }
+
+    /**
+     * Test API connectivity for the with-ai endpoint
+     */
+    testApiConnectivity(): Observable<any> {
+        const testPayload = {
+            message: {
+                role: 'user',
+                content: 'test message',
+                chatSessionId: 1
+            },
+            aiModelId: 2,
+            chatModeId: 1,
+            processWithAI: true,
+            platformSlug: 'openai',
+            model: 'gpt-3.5-turbo'
+        }
+
+        console.log('Testing API connectivity with payload:', testPayload)
+        console.log('Full API URL:', `${this.baseUrl}/${this.endpoint}/with-ai`)
+
+        return this.apiService.post<any>(this.baseUrl, `${this.endpoint}/with-ai`, testPayload).pipe(
+            map(response => {
+                console.log('Test API response:', response)
+                return response
+            }),
+            catchError(error => {
+                console.error('Test API error:', error)
+                return throwError(() => error)
+            })
+        )
     }
 
     /**
@@ -362,7 +470,6 @@ export class ChatMessageService {
      * Convert array of API ChatMessages to UI ChatMessageExtended array
      */
     private convertToExtendedMessages(messages: ChatMessage[]): ChatMessageExtended[] {
-        console.log('ChatMessageService - converting messages to extended format:', messages)
         return messages.map(message => this.convertToExtendedMessage(message))
     }
 

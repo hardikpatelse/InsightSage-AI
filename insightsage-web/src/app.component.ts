@@ -30,16 +30,13 @@ export class AppComponent {
         this.userService.currentUser$.subscribe(user => {
             this.user = user
             if (user) {
-                console.log('App: Current user authenticated:', user)
                 // If user is authenticated and on login page, redirect to dashboard
                 if (this.isLoginPage) {
                     this.router.navigate(['/'])
                 }
             } else {
-                console.log('App: No authenticated user')
                 // If no user and not on auth/landing/notfound pages, redirect to login
                 if (!this.isAuthPage && !this.isLandingPage && !this.isNotFoundPage) {
-                    console.log('App: Redirecting to login due to no authenticated user')
                     this.router.navigate(['/auth/login'])
                 }
             }
@@ -49,7 +46,6 @@ export class AppComponent {
         this.router.events
             .pipe(filter(event => event instanceof NavigationEnd))
             .subscribe((event: NavigationEnd) => {
-                console.log('App: Navigation ended:', event.url)
                 this.isLoginPage = event.url.includes('/login')
                 this.isAuthPage = event.url.startsWith('/auth')
                 this.isLandingPage = event.url === '/landing'

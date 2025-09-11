@@ -1,6 +1,8 @@
-﻿using InsightSage.Shared.Interfaces.Others;
+﻿using InsightSage.Application.Services;
+using InsightSage.Shared.Interfaces.Others;
 using InsightSage.Shared.Interfaces.Services;
 using InsightSage.Shared.Models.Entities;
+using InsightSage.Shared.Models.Requests;
 using InsightSage.Shared.Models.Responses;
 using InsightSage.Shared.Models.Responses.Common;
 using Microsoft.AspNetCore.Authorization;
@@ -105,10 +107,10 @@ namespace InsightSage.API.Chat.Controllers
         }
 
         /// <summary>
-        /// Get all chat sessions for a specific user
+        /// Get all chat sessions for the current user
         /// </summary>
         [HttpGet("user")]
-        public async Task<ChatSessionResponse<List<ChatSession>>> GetSessionsByUserId()
+        public async Task<ChatSessionResponse<List<ChatSession>>> GetUserSessions()
         {
             try
             {
@@ -126,10 +128,10 @@ namespace InsightSage.API.Chat.Controllers
         }
 
         /// <summary>
-        /// Search chat sessions by user ID and session name
+        /// Search chat sessions by name for the current user
         /// </summary>
-        [HttpGet("search/user")]
-        public async Task<ChatSessionResponse<List<ChatSession>>> SearchSessionsByUserAndName([FromQuery] string name)
+        [HttpGet("search")]
+        public async Task<ChatSessionResponse<List<ChatSession>>> SearchSessions([FromQuery] string name)
         {
             try
             {
@@ -164,7 +166,119 @@ namespace InsightSage.API.Chat.Controllers
             var result = new AddUpdateEntityResponse();
             try
             {
+                if (session == null)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Session data is required");
+                    return result;
+                }
+
+                if (string.IsNullOrWhiteSpace(session.Name))
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Session name is required");
+                    return result;
+                }
+
                 result = await _chatSessionService.AddUpdateAsync(session);
+            }
+            catch (Exception ex)
+            {
+                result.Status = HttpStatusCode.InternalServerError;
+                result.Errors.Add(ex.GetBaseException().Message);
+                result.ExceptionDetails = ex.ToString();
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Create a new chat session with AI model and chat mode configuration
+        /// </summary>
+        [HttpPost("with-config")]
+        public async Task<AddUpdateEntityResponse> CreateSessionWithConfiguration([FromBody] SessionWithConfigRequest request)
+        {
+            var result = new AddUpdateEntityResponse();
+            try
+            {
+                if (request == null)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Request data is required");
+                    return result;
+                }
+
+                if (string.IsNullOrWhiteSpace(request.Name))
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Session name is required");
+                    return result;
+                }
+
+                // Cast to ChatSessionService to access the new method
+                if (_chatSessionService is ChatSessionService concreteService)
+                {
+                    result = await concreteService.CreateSessionWithConfigurationAsync(
+                        request.Name,
+                        request.AIModelId,
+                        request.ChatModeId);
+                }
+                else
+                {
+                    // Fallback to regular method
+                    var session = new ChatSession
+                    {
+                        Name = request.Name,
+                        AIModelId = request.AIModelId,
+                        ChatModeId = request.ChatModeId
+                    };
+                    result = await _chatSessionService.AddUpdateAsync(session);
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Status = HttpStatusCode.InternalServerError;
+                result.Errors.Add(ex.GetBaseException().Message);
+                result.ExceptionDetails = ex.ToString();
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Update chat session configuration (AI model and/or chat mode)
+        /// </summary>
+        [HttpPatch("{id:int}/config")]
+        public async Task<AddUpdateEntityResponse> UpdateSessionConfiguration(int id, [FromBody] SessionWithConfigRequest request)
+        {
+            var result = new AddUpdateEntityResponse();
+            try
+            {
+                if (request == null)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Request data is required");
+                    return result;
+                }
+
+                if (id <= 0)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Invalid session ID");
+                    return result;
+                }
+
+                // Cast to ChatSessionService to access the new method
+                if (_chatSessionService is ChatSessionService concreteService)
+                {
+                    result = await concreteService.UpdateSessionConfigurationAsync(
+                        id,
+                        request.AIModelId,
+                        request.ChatModeId);
+                }
+                else
+                {
+                    result.Status = HttpStatusCode.InternalServerError;
+                    result.Errors.Add("Configuration update is not supported");
+                }
             }
             catch (Exception ex)
             {
@@ -184,41 +298,33 @@ namespace InsightSage.API.Chat.Controllers
             var result = new AddUpdateEntityResponse();
             try
             {
-                //if (session == null)
-                //{
-                //    return BadRequest(new ChatSessionResponse<ChatSession>
-                //    {
-                //        Status = HttpStatusCode.BadRequest,
-                //        Errors = new List<string> { "Session data is required" }
-                //    });
-                //}
+                if (session == null)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Session data is required");
+                    return result;
+                }
 
-                //if (id <= 0)
-                //{
-                //    return BadRequest(new ChatSessionResponse<ChatSession>
-                //    {
-                //        Status = HttpStatusCode.BadRequest,
-                //        Errors = new List<string> { "Invalid session ID" }
-                //    });
-                //}
+                if (id <= 0)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Invalid session ID");
+                    return result;
+                }
 
-                //if (session.Id != id)
-                //{
-                //    return BadRequest(new ChatSessionResponse<ChatSession>
-                //    {
-                //        Status = HttpStatusCode.BadRequest,
-                //        Errors = new List<string> { "Session ID mismatch" }
-                //    });
-                //}
+                if (session.Id != id)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Session ID mismatch");
+                    return result;
+                }
 
-                //if (string.IsNullOrWhiteSpace(session.Name))
-                //{
-                //    return BadRequest(new ChatSessionResponse<ChatSession>
-                //    {
-                //        Status = HttpStatusCode.BadRequest,
-                //        Errors = new List<string> { "Session name is required" }
-                //    });
-                //}
+                if (string.IsNullOrWhiteSpace(session.Name))
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Session name is required");
+                    return result;
+                }
 
                 result = await _chatSessionService.AddUpdateAsync(session);
             }
@@ -235,11 +341,18 @@ namespace InsightSage.API.Chat.Controllers
         /// Delete a chat session
         /// </summary>
         [HttpDelete("{id:int}")]
-        public async Task<DeleteEntityResponse> DeleteSession(int id, [FromQuery] int modifiedBy = 0)
+        public async Task<DeleteEntityResponse> DeleteSession(int id)
         {
             var result = new DeleteEntityResponse();
             try
             {
+                if (id <= 0)
+                {
+                    result.Status = HttpStatusCode.BadRequest;
+                    result.Errors.Add("Invalid session ID");
+                    return result;
+                }
+
                 result = await _chatSessionService.DeleteAsync(id, _userContext.UserId);
             }
             catch (Exception ex)

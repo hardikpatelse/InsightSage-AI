@@ -8,6 +8,7 @@ export class ChatMessage extends BaseEntity {
     role: string | null = null
     content: string | null = null
 
+
     constructor(init?: Partial<ChatMessage>) {
         super()
         Object.assign(this, init)

@@ -22,6 +22,155 @@ namespace InsightSage.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("InsightSage.Shared.Models.Entities.AIModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_AIModels_IsActive");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AIModels_Name_Unique");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AIModels_Slug_Unique");
+
+                    b.ToTable("AIModels");
+                });
+
+            modelBuilder.Entity("InsightSage.Shared.Models.Entities.AIPlatform", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApiBaseUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("AuthHeaderFormat")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasDefaultValue("Bearer {api_key}");
+
+                    b.Property<string>("AuthHeaderName")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasDefaultValue("Authorization");
+
+                    b.Property<string>("ConfigurationJson")
+                        .HasColumnType("ntext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int>("DefaultTimeoutSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DocumentationUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("RateLimitPerMinute")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("RequiresApiKey")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("WebsiteUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DisplayOrder")
+                        .HasDatabaseName("IX_AIPlatforms_DisplayOrder");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_AIPlatforms_IsActive");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AIPlatforms_Name_Unique");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AIPlatforms_Slug_Unique");
+
+                    b.ToTable("AIPlatforms");
+                });
+
             modelBuilder.Entity("InsightSage.Shared.Models.Entities.ChatMessage", b =>
                 {
                     b.Property<int>("Id")
@@ -38,18 +187,83 @@ namespace InsightSage.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ChatSessionId")
+                        .HasDatabaseName("IX_ChatMessages_ChatSessionId");
+
                     b.ToTable("ChatMessages");
+                });
+
+            modelBuilder.Entity("InsightSage.Shared.Models.Entities.ChatMode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("IconName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_ChatModes_IsActive");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ChatModes_Name_Unique");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ChatModes_Slug_Unique");
+
+                    b.ToTable("ChatModes");
                 });
 
             modelBuilder.Entity("InsightSage.Shared.Models.Entities.ChatSession", b =>
@@ -60,23 +274,56 @@ namespace InsightSage.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AIModelId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ChatModeId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<Guid>("UniqueIdentity")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AIModelId")
+                        .HasDatabaseName("IX_ChatSessions_AIModelId");
+
+                    b.HasIndex("ChatModeId")
+                        .HasDatabaseName("IX_ChatSessions_ChatModeId");
+
+                    b.HasIndex("UniqueIdentity")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ChatSessions_UniqueIdentity");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_ChatSessions_UserId");
+
+                    b.HasIndex("UserId", "AIModelId")
+                        .HasDatabaseName("IX_ChatSessions_UserId_AIModelId");
+
+                    b.HasIndex("UserId", "ChatModeId")
+                        .HasDatabaseName("IX_ChatSessions_UserId_ChatModeId");
+
+                    b.HasIndex("UserId", "Name")
+                        .HasDatabaseName("IX_ChatSessions_UserId_Name");
 
                     b.ToTable("ChatSessions");
                 });
@@ -129,6 +376,34 @@ namespace InsightSage.Data.Migrations
                         .HasDatabaseName("IX_Users_UserId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("InsightSage.Shared.Models.Entities.ChatMessage", b =>
+                {
+                    b.HasOne("InsightSage.Shared.Models.Entities.ChatSession", null)
+                        .WithMany()
+                        .HasForeignKey("ChatSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InsightSage.Shared.Models.Entities.ChatSession", b =>
+                {
+                    b.HasOne("InsightSage.Shared.Models.Entities.AIModel", "AIModel")
+                        .WithMany()
+                        .HasForeignKey("AIModelId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_ChatSessions_AIModel");
+
+                    b.HasOne("InsightSage.Shared.Models.Entities.ChatMode", "ChatMode")
+                        .WithMany()
+                        .HasForeignKey("ChatModeId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_ChatSessions_ChatMode");
+
+                    b.Navigation("AIModel");
+
+                    b.Navigation("ChatMode");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core'
 import { Observable, BehaviorSubject, of } from 'rxjs'
-import { map, catchError, tap, switchMap } from 'rxjs/operators'
+import { map, catchError, switchMap } from 'rxjs/operators'
 import { ApiService } from './api.service'
 import { environment } from '../../../environments/environment'
 import { ChatSession, ChatSessionSearchParams } from '../entities/chat-session'
-import { ChatSessionListResponse } from '../entities/responses/chat-sessions-response'
-import { AddUpdateEntityResponse } from '../entities/common/add-update-entity-response'
-import { ChatSessionResponse } from '../entities/responses/chat-session-response'
-import { DeleteEntityResponse } from '../entities/common/delete-entity-response'
-import { isApiSuccess } from '../entities/responses/api-response'
 import { ChatSessionRequest } from '../entities/requests/chat-session-request'
 
 @Injectable({
@@ -163,15 +158,12 @@ export class ChatSessionService {
    * Get all chat sessions for the current user
    */
   getUserSessions(): Observable<ChatSession[]> {
-    console.log('ChatSessionService - getUserSessions called')
     return this.apiService.get<ChatSession[]>(this.baseUrl, 'Session/user').pipe(
       map(sessions => {
-        console.log('ChatSessionService - getUserSessions response (unwrapped by interceptor):', sessions)
 
         // The interceptor automatically unwraps successful responses, so we get the array directly
         const sessionArray = Array.isArray(sessions) ? sessions : []
 
-        console.log('ChatSessionService - updating sessionsSubject with:', sessionArray)
         this.sessionsSubject.next(sessionArray)
         return sessionArray
       }),
@@ -246,11 +238,13 @@ export class ChatSessionService {
   /**
    * Create a new session with a default name
    */
-  createNewSession(name?: string): Observable<ChatSession> {
+  createNewSession(name?: string, defaultAIModelId?: number, defaultChatModeId?: number): Observable<ChatSession> {
     const sessionName = name || `Chat Session ${new Date().toLocaleString()}`
     const newSession: ChatSessionRequest = {
       name: sessionName,
-      id: 0
+      id: 0,
+      defaultAIModelId: defaultAIModelId,
+      defaultChatModeId: defaultChatModeId
     }
 
     return this.createSession(newSession).pipe(

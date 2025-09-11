@@ -2,7 +2,8 @@ using InsightSage.Application.Services;
 using InsightSage.Data;
 using InsightSage.DataContext;
 using InsightSage.Infrastructure;
-using InsightSage.Shared.Middleware.Extensions;
+using InsightSage.Infrastructure.Extensions; // Add this using for the API connector
+using InsightSage.Shared.Middleware.Extensions; // Add this using for the ResponseStatusMiddleware
 using InsightSage.Shared.Interfaces.DataContexts;
 using InsightSage.Shared.Interfaces.Others;
 using InsightSage.Shared.Interfaces.Services;
@@ -12,6 +13,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using InsightSage.Infrastructure.Examples;
+using InsightSage.Application.Services.AI;
+using InsightSage.Application.Services.SignalR;
+using InsightSage.Application.Services.SignalR.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -122,6 +127,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 var token = context.Request.Headers["Authorization"].FirstOrDefault();
                 logger.LogDebug("Received token: {HasToken}", !string.IsNullOrEmpty(token));
+                
+                // Enable SignalR JWT authentication via query string
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    // Check if this is a SignalR request
+                    var path = context.HttpContext.Request.Path;
+                    if (path.StartsWithSegments("/api/chat-hub"))
+                    {
+                        context.Token = accessToken;
+                        logger.LogDebug("SignalR token extracted from query string");
+                    }
+                }
+                
                 return Task.CompletedTask;
             }
         };
@@ -146,6 +165,9 @@ builder.Services.AddHttpContextAccessor(); // Needed for scoped services
 builder.Services.AddScoped<IUserService<UserResponse<List<User>>, UserResponse<User>, User>, UserService>();
 builder.Services.AddScoped<IChatSessionService<ChatSessionResponse<List<ChatSession>>, ChatSessionResponse<ChatSession>, ChatSession>, ChatSessionService>();
 builder.Services.AddScoped<IChatMessageService<ChatMessageResponse<List<ChatMessage>>, ChatMessageResponse<ChatMessage>, ChatMessage>, ChatMessageService>();
+builder.Services.AddScoped<IAIModelService<AIModelResponse<List<AIModel>>, AIModelResponse<AIModel>, AIModel>, AIModelService>();
+builder.Services.AddScoped<IChatModeService<ChatModeResponse<List<ChatMode>>, ChatModeResponse<ChatMode>, ChatMode>, ChatModeService>();
+builder.Services.AddScoped<IAIPlatformService<AIPlatformResponse<List<AIPlatform>>, AIPlatformResponse<AIPlatform>, AIPlatform>, AIPlatformService>();
 #endregion
 
 #region Connection Strings
@@ -157,10 +179,36 @@ builder.Services.AddDbContext<InsightSageDbContext>(options =>
 builder.Services.AddScoped<IChatSessionDataContext, ChatSessionDataContext>();
 builder.Services.AddScoped<IUserDataContext, UserDataContext>();
 builder.Services.AddScoped<IChatMessageDataContext, ChatMessageDataContext>();
+builder.Services.AddScoped<IAIModelDataContext, AIModelDataContext>();
+builder.Services.AddScoped<IChatModeDataContext, ChatModeDataContext>();
+builder.Services.AddScoped<IAIPlatformDataContext, AIPlatformDataContext>();
 #endregion
 
 #region Infrastructure Services
 builder.Services.AddScoped<IUserContext, UserContext>();
+// Add API Connector for 3rd party API calls
+builder.Services.AddApiConnector(client =>
+{
+    client.DefaultRequestHeaders.Add("User-Agent", "InsightSage-Chat-API/1.0");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+#endregion
+
+#region SignalR Configuration
+builder.Services.AddSignalR();
+#endregion
+
+#region Background Services
+builder.Services.AddHostedService<AIProcessingService>();
+builder.Services.AddSingleton<AIProcessingService>();
+#endregion
+
+#region SignalR Services
+builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+#endregion
+
+#region Infrastructure Services
+builder.Services.AddScoped<MultiPlatformAIService>();
 #endregion
 
 builder.Services.AddControllers();
@@ -189,6 +237,9 @@ app.UseAuthorization();
 app.UseResponseStatusMiddleware();
 
 app.MapControllers();
+
+// Configure SignalR Hub
+app.MapHub<ChatHub>("/api/chat-hub");
 
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {

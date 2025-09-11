@@ -8,9 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.7" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\InsightSage.Infrastructure\InsightSage.Infrastructure.csproj" />
     <ProjectReference Include="..\InsightSage.Shared\InsightSage.Shared.csproj" />
   </ItemGroup>
 

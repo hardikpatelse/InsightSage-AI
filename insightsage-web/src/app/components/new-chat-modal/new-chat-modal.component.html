@@ -1,0 +1,98 @@
+<p-dialog header="Create New Chat Session" [(visible)]="visible" [modal]="true" [closable]="true" [draggable]="false"
+    [resizable]="false" styleClass="new-chat-modal" [style]="{width: '500px'}" (onHide)="onClose()">
+
+    <form [formGroup]="newChatForm" (ngSubmit)="onSubmit()" class="new-chat-form">
+
+        <!-- Session Name Field -->
+        <div class="field mb-4">
+            <label for="sessionName" class="block text-900 font-semibold mb-2">
+                <i class="pi pi-comment mr-2"></i>
+                Chat Session Name <span class="text-red-500">*</span>
+            </label>
+            <input pInputText id="sessionName" formControlName="sessionName" placeholder="Enter chat session name..."
+                class="w-full" [class.p-invalid]="isFieldInvalid('sessionName')" maxlength="100" />
+            <small class="p-error block mt-1" *ngIf="isFieldInvalid('sessionName')">
+                {{ getFieldError('sessionName') }}
+            </small>
+        </div>
+
+        <!-- AI Model Selection -->
+        <div class="field mb-4">
+            <label for="aiModel" class="block text-900 font-semibold mb-2">
+                <i class="pi pi-brain mr-2"></i>
+                AI Model <span class="text-red-500">*</span>
+            </label>
+            <p-select [options]="aiModels" formControlName="aiModelId" optionLabel="name" optionValue="id"
+                placeholder="Select AI Model" class="w-full" [class.p-invalid]="isFieldInvalid('aiModelId')">
+
+                <ng-template pTemplate="selectedItem">
+                    <div class="flex align-items-center gap-2" *ngIf="getSelectedAIModel()">
+                        <i class="pi pi-brain text-primary"></i>
+                        <span>{{ getSelectedAIModel()?.name }}</span>
+                        <p-chip *ngIf="getSelectedAIModel()?.provider" [label]="getSelectedAIModel()?.provider"
+                            class="text-xs">
+                        </p-chip>
+                    </div>
+                </ng-template>
+
+                <ng-template pTemplate="item" let-model>
+                    <div class="flex align-items-center justify-content-between w-full">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-brain text-primary"></i>
+                            <div>
+                                <div class="font-semibold">{{ model.name }}</div>
+                                <small class="text-color-secondary">{{ model.description }}</small>
+                            </div>
+                        </div>
+                        <p-chip *ngIf="model.platformSlug" [label]="model.platformSlug" class="text-xs">
+                        </p-chip>
+                    </div>
+                </ng-template>
+            </p-select>
+            <small class="p-error block mt-1" *ngIf="isFieldInvalid('aiModelId')">
+                {{ getFieldError('aiModelId') }}
+            </small>
+        </div>
+
+        <!-- Chat Mode Selection -->
+        <div class="field mb-6">
+            <label for="chatMode" class="block text-900 font-semibold mb-2">
+                <i class="pi pi-cog mr-2"></i>
+                Chat Mode <span class="text-red-500">*</span>
+            </label>
+            <p-select [options]="chatModes" formControlName="chatModeId" optionLabel="name" optionValue="id"
+                placeholder="Select Chat Mode" class="w-full" [class.p-invalid]="isFieldInvalid('chatModeId')">
+
+                <ng-template pTemplate="selectedItem">
+                    <div class="flex align-items-center gap-2" *ngIf="getSelectedChatMode()">
+                        <i [class]="getSelectedChatMode()?.iconName" class="text-primary"></i>
+                        <span>{{ getSelectedChatMode()?.name }}</span>
+                    </div>
+                </ng-template>
+
+                <ng-template pTemplate="item" let-mode>
+                    <div class="flex align-items-center gap-2">
+                        <i [class]="mode.iconName" class="text-primary"></i>
+                        <div>
+                            <div class="font-semibold">{{ mode.name }}</div>
+                            <small class="text-color-secondary">{{ mode.description }}</small>
+                        </div>
+                    </div>
+                </ng-template>
+            </p-select>
+            <small class="p-error block mt-1" *ngIf="isFieldInvalid('chatModeId')">
+                {{ getFieldError('chatModeId') }}
+            </small>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-content-end gap-2 pt-3 border-top-1 surface-border">
+            <p-button label="Cancel" icon="pi pi-times" severity="secondary" (onClick)="onClose()" [outlined]="true">
+            </p-button>
+            <p-button label="Create Chat" icon="pi pi-plus" type="submit" [disabled]="!newChatForm.valid"
+                [loading]="false">
+            </p-button>
+        </div>
+
+    </form>
+</p-dialog>

@@ -34,15 +34,11 @@ export class AppMenu implements OnInit, OnDestroy {
         this.chatSessionService.sessions$.pipe(
             takeUntil(this.destroy$)
         ).subscribe(sessions => {
-            console.log('AppMenu - received sessions:', sessions, 'length:', sessions?.length)
             this.updateChatMenu(sessions)
         })
 
         // Load chat sessions
         this.chatSessionService.getUserSessions().subscribe({
-            next: (sessions) => {
-                console.log('AppMenu - getUserSessions success:', sessions)
-            },
             error: (error) => {
                 console.error('AppMenu - getUserSessions error:', error)
             }
@@ -196,8 +192,6 @@ export class AppMenu implements OnInit, OnDestroy {
     }
 
     private updateChatMenu(sessions: ChatSession[]): void {
-        console.log('AppMenu - updateChatMenu called with:', sessions)
-
         const chatMenuItem = this.model.find(item => item.label === 'Chat')
         if (chatMenuItem && chatMenuItem.items) {
             // Keep the "New Chat" item and add sessions
@@ -208,14 +202,13 @@ export class AppMenu implements OnInit, OnDestroy {
                 chatMenuItem.items.push(newChatItem)
             }
 
-            // Add separator if there are sessions
-            if (sessions.length > 0) {
-                chatMenuItem.items.push({ separator: true })
-            }
+            // // Add separator if there are sessions
+            // if (sessions.length > 0) {
+            //     chatMenuItem.items.push({ separator: true })
+            // }
 
             // Add each session as a menu item
             sessions.forEach((session, index) => {
-                console.log(`AppMenu - adding session ${index}:`, session.name, session.uniqueIdentity)
                 chatMenuItem.items!.push({
                     label: session.name || `Session ${session.id}`,
                     icon: 'pi pi-fw pi-comments',
@@ -223,8 +216,6 @@ export class AppMenu implements OnInit, OnDestroy {
                     title: session.name || `Chat Session ${session.id}`
                 })
             })
-
-            console.log('AppMenu - final chat menu items count:', chatMenuItem.items.length)
         }
     }
 }

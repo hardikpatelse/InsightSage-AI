@@ -1,3 +1,5 @@
+import { AIModel } from "./ai-model"
+import { ChatMode } from "./chat-mode"
 import { BaseEntity } from "./common/base-entity"
 
 // Chat Session Entity Interfaces based on Swagger API specification
@@ -5,6 +7,11 @@ export class ChatSession extends BaseEntity {
     name: string = ''
     uniqueIdentity: string = ''
     userId: string = ''
+    aiModelId?: number | null = null
+    chatModeId?: number | null = null
+    aiModel?: AIModel | null = null
+    chatMode?: ChatMode | null = null
+
 
     constructor(init?: Partial<ChatSession>) {
         super()

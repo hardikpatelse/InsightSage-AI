@@ -65,6 +65,7 @@ export const appConfig: ApplicationConfig = {
             provide: MSAL_GUARD_CONFIG,
             useFactory: MSALGuardConfigFactory
         },
+        // Temporarily disable MSAL interceptor to avoid conflicts
         {
             provide: MSAL_INTERCEPTOR_CONFIG,
             useFactory: MSALInterceptorConfigFactory
